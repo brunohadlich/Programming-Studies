@@ -1,0 +1,210 @@
+mnemonic;opcode
+xlat;D7
+sti;FB
+cwde;98
+cli;FA
+std;FD
+cld;FC
+stc;F9
+clc;F8
+sahf;9E
+cdq;99
+wait;9B
+cmc;F5
+movsb;A4
+lahf;9F
+nop;90
+popad;61
+outsb;6E
+movsd;A5
+hlt;F4
+rep;F3
+insd;6D
+aaa;37
+lodsb;AC
+ret;C3
+outsd;6F
+daa;27
+insb;6C
+into;CE
+pushad;60
+cmpsb;A6
+lodsd;AD
+scasb;AE
+scasd;AF
+stosd;AB
+stosb;AA
+cmpsd;A7
+das;2E2F
+int 3;CC
+leave;C9
+pause;F390
+
+mnemonic;opcode;instruction_code;operand_code
+push $08;6A08;6A;08
+inc eax;40;;;
+inc edx;42;;;
+dec eax;48;;
+pop ebp;5D;;
+xor eax,eax;33C0;;
+push ebp;55;;
+push ecx;51;;
+pop esi;5E;;
+push esi;56;;
+push eax;50;;
+test eax,eax;85C0;;
+mov edi,edi;8BFF;;
+mov ebp,esp;8BEC;;
+pop ecx;59;;
+mov esi,eax;8BF0;;
+test esi,esi;85F6;;
+xor esi,esi;33F6;;
+neg cl;F6D9;;
+sbb cl,cl;1AC9;;
+xor edx,edx;33D2;;
+mov cl,al;8AC8;;
+push ebx;53;;
+push edi;57;;
+xor edi,edi;33FF;;
+cmp ecx,edx;3BCA;;
+add ecx,esi;03CE;;
+mov cl,dl;8ACA;;
+shl eax,cl;D3E0;;
+sub edx,ecx;2BD1;;
+58               pop eax
+03F8             add edi,eax
+03D8             add ebx,eax
+85C9             test ecx,ecx
+03F9             add edi,ecx
+03D9             add ebx,ecx
+85D2             test edx,edx
+8BCF             mov ecx,edi
+F7D1             not ecx
+23CE             and ecx,esi
+F7D7             not edi
+85FE             test esi,edi
+5F               pop edi
+8BC2             mov eax,edx
+5B               pop ebx
+xor eax,ebp;33C5;;
+F7D2             not edx
+23C2             and eax,edx
+3BC7             cmp eax,edi
+F7D0             not eax
+23C4             and eax,esp
+03D1             add edx,ecx
+3BC2             cmp eax,edx
+33CD             xor ecx,ebp
+2BC3             sub eax,ebx
+2BC6             sub eax,esi
+03C0             add eax,eax
+8BC6             mov eax,esi
+33DB             xor ebx,ebx
+3BC3             cmp eax,ebx
+663BC3           cmp ax,bx
+0FB7C0           movzx eax,ax
+03F0             add esi,eax
+03D2             add edx,edx
+52               push edx
+FFD7             call edi
+03C9             add ecx,ecx
+D1E8             shr eax,1
+85DB             test ebx,ebx
+3BD0             cmp edx,eax
+3BF3             cmp esi,ebx
+6685D2           test dx,dx
+2BC1             sub eax,ecx
+D1F8             sar eax,1
+8938             mov [eax],edi
+D1EE             shr esi,1
+0F94C1           setz cl
+8BC1             mov eax,ecx
+33C9             xor ecx,ecx
+F7D9             neg ecx
+1BC9             sbb ecx,ecx
+8902             mov [edx],eax
+8BC7             mov eax,edi
+FFD6             call esi
+8B3B             mov edi,[ebx]
+8BFA             mov edi,edx
+8BC3             mov eax,ebx
+03C6             add eax,esi
+13C7             adc eax,edi
+8BC8             mov ecx,eax
+3BCE             cmp ecx,esi
+3BC6             cmp eax,esi
+0FB6C9           movzx ecx,cl
+D1EA             shr edx,1
+8BD1             mov edx,ecx
+8BCE             mov ecx,esi
+0FB6D2           movzx edx,dl
+23C8             and ecx,eax
+23D0             and edx,eax
+8B0E             mov ecx,[esi]
+8BD7             mov edx,edi
+FFD3             call ebx
+3BC8             cmp ecx,eax
+0F95C0           setnz al
+3AC3             cmp al,bl
+0F95C1           setnz cl
+8918             mov [eax],ebx
+8908             mov [eax],ecx
+8BD0             mov edx,eax
+23D1             and edx,ecx
+3BD1             cmp edx,ecx
+8911             mov [ecx],edx
+8930             mov [eax],esi
+F7DA             neg edx
+1BD2             sbb edx,edx
+663BCF           cmp cx,di
+2BC2             sub eax,edx
+3BF7             cmp esi,edi
+668B10           mov dx,[eax]
+8BFE             mov edi,esi
+8B32             mov esi,[edx]
+3BDF             cmp ebx,edi
+03C2             add eax,edx
+8907             mov [edi],eax
+8B07             mov eax,[edi]
+66A5             movsw 
+0000             add [eax],al
+0002             add [edx],al
+0018             add [eax],bl
+5C               pop esp
+43               inc ebx
+4E               dec esi
+4F               dec edi
+49               dec ecx
+0E               push cs
+44               inc esp
+0021             add [ecx],ah
+4D               dec ebp
+002E             add [esi],ch
+002A             add [edx],ch
+6300             arpl [eax],ax
+41               inc ecx
+2000             and [eax],al
+0200             add al,[eax]
+0300             add eax,[eax]
+000400           add [eax+eax],al
+0100             add [eax],eax
+54               push esp
+2200             and al,[eax]
+45               inc ebp
+003F             add [edi],bh
+0008             add [eax],cl
+000A             add [edx],cl
+0038             add [eax],bh
+3300             xor eax,[eax]
+3200             xor al,[eax]
+46               inc esi
+3A20             cmp ah,[eax]
+666F             outsw 
+2920             sub [eax],esp
+6661             popa 
+0A00             or al,[eax]
+003A             add [edx],bh
+4B               dec ebx
+
+
+combinação: F3 é o rep se fazer f3D7 será rep xlat
