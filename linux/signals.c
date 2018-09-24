@@ -28,4 +28,5 @@ int main(int argc, char **argv) {
 		printf("Could not register SIGUSR1 handler.\n");
 	}
 	sleep(1000000);
+	exit(EXIT_SUCCESS);
 }
