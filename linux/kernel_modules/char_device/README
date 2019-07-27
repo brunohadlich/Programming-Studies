@@ -1,0 +1,17 @@
+Run:
+
+make
+make test
+
+Take the number that appears at the end of the line and run:
+
+sudo mknod /dev/lkm_example c number_you_just_found 0
+
+After that you may run:
+
+cat /dev/lkm_example
+
+After done run:
+
+sudo rm /dev/lkm_example
+sudo rmmod lkm_example
