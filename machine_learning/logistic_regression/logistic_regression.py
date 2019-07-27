@@ -11,14 +11,6 @@ def sigmoid(x):
 
 
 def hypothesis(theta, x):
-    """
-    >>> hypothesis([3, 4, 5], [1, 3, 4])
-    35
-    >>> hypothesis([7, 2, 9, 1], [1, 7, 1, 8])
-    38
-    >>> hypothesis([13, 7, 3, 2], [1, 10, 32, 7])
-    193
-    """
     return sigmoid(sum([theta[i] * x[i] for i in range(len(theta))]))
 
 
@@ -119,7 +111,8 @@ def inpute_age(cols):
         return Age
 
 
-def format_dataset(train):
+def load_format_dataset():
+    train = pd.read_csv("titanic_problem/train.csv")
     train["Age"] = train[["Age", "Pclass"]].apply(inpute_age, axis=1)
     train.drop("Cabin", axis=1, inplace=True)
     train.dropna(inplace=True)
@@ -127,7 +120,12 @@ def format_dataset(train):
     embark = pd.get_dummies(train["Embarked"], drop_first=True)
     train.drop(["Sex", "Embarked", "Name", "Ticket"], axis=1, inplace=True)
     train = pd.concat([train, sex, embark], axis=1)
-    return train
+    return train_test_split(
+        train.drop("Survived", axis=1),
+        train["Survived"],
+        test_size=0.30,
+        random_state=101,
+    )
 
 
 def print_accuracy(y_test, predictions):
@@ -136,14 +134,7 @@ def print_accuracy(y_test, predictions):
 
 
 def scikit_learn_solution():
-    train = pd.read_csv("titanic_problem/train.csv")
-    train = format_dataset(train)
-    X_train, X_test, y_train, y_test = train_test_split(
-        train.drop("Survived", axis=1),
-        train["Survived"],
-        test_size=0.30,
-        random_state=101,
-    )
+    X_train, X_test, y_train, y_test =  load_format_dataset()
     logmodel = LogisticRegression()
     logmodel.fit(X_train, y_train)
     predictions = logmodel.predict(X_test)
@@ -151,14 +142,7 @@ def scikit_learn_solution():
 
 
 def manual_solution():
-    train = pd.read_csv("titanic_problem/train.csv")
-    train = format_dataset(train)
-    x_train, x_test, y_train, y_test = train_test_split(
-        train.drop("Survived", axis=1),
-        train["Survived"],
-        test_size=0.30,
-        random_state=101,
-    )
+    x_train, x_test, y_train, y_test = load_format_dataset()
     x_train = x_train.values.tolist()
     y_train = y_train.values.tolist()
     x_test = x_test.values.tolist()
@@ -172,30 +156,18 @@ def manual_solution():
     theta, history_cost_iteration = gradient_descent(
         x_train, y_train, iterations, alpha, convergence_threshold
     )
-    print("\nNumber of samples: {}.\n".format(m))
-    print(
-        (
-            "Theta is equal to {} after {} gradient descent iterations using "
-            "alpha equals to {} and convergence threshold of {} reaching a "
-            "cost of {}.\n"
-        ).format(
-            theta,
-            len(history_cost_iteration),
-            alpha,
-            convergence_threshold,
-            cost_function(theta, x_train, y_train),
-        )
-    )
     predictions = predict(x_test, x_feature_mean, x_feature_sdv, theta)
     print_accuracy(y_test, predictions)
 
 
 if __name__ == "__main__":
+    print("\nProcessing manual solution:\n")
     start = time()
     manual_solution()
     end = time()
-    print(f"manual_solution took {end - start}s to finish.")
+    print(f"\nmanual_solution took {end - start}s to finish.")
+    print("\nProcessing scikit learn solution:\n")
     start = time()
     scikit_learn_solution()
     end = time()
-    print(f"manual_solution took {end - start}s to finish.")
+    print(f"\nscikit_learn_solution took {end - start}s to finish.\n")
