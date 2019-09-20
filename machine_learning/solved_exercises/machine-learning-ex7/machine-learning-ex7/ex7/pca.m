@@ -11,7 +11,9 @@ function [U, S] = pca(X)
 
 sigma = (1/m) * (X' * X);
 
+
 [U, S, V] = svd(sigma);
+
 
 % ====================== YOUR CODE HERE ======================
 % Instructions: You should first compute the covariance matrix. Then, you

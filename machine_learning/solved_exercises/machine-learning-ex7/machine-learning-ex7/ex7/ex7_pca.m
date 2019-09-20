@@ -47,7 +47,6 @@ fprintf('\nRunning PCA on example dataset.\n\n');
 
 %  Before running PCA, it is important to first normalize X
 [X_norm, mu, sigma] = featureNormalize(X);
-
 %  Run PCA
 [U, S] = pca(X_norm);
 
@@ -131,6 +130,9 @@ fprintf(['\nRunning PCA on face dataset.\n' ...
 
 %  Run PCA
 [U, S] = pca(X_norm);
+size(X_norm)
+size(U)
+size(S)
 
 %  Visualize the top 36 eigenvectors found
 displayData(U(:, 1:36)');
@@ -146,7 +148,9 @@ fprintf('\nDimension reduction for face dataset.\n\n');
 
 K = 100;
 Z = projectData(X_norm, U, K);
-
+size(U)
+size(K)
+size(Z)
 fprintf('The projected data Z has a size of: ')
 fprintf('%d ', size(Z));
 
@@ -162,7 +166,7 @@ fprintf('\nVisualizing the projected (reduced dimension) faces.\n\n');
 
 K = 100;
 X_rec  = recoverData(Z, U, K);
-
+size(X_rec)
 % Display normalized data
 subplot(1, 2, 1);
 displayData(X_norm(1:100,:));
