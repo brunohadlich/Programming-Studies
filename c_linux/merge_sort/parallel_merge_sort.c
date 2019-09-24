@@ -1,20 +1,3 @@
-/*
- * =====================================================================================
- *
- *       Filename:  parallel_merge_sort.c
- *
- *    Description:  
- *
- *        Version:  1.0
- *        Created:  09/19/2019 08:37:25 PM
- *       Revision:  none
- *       Compiler:  gcc
- *
- *         Author:  YOUR NAME (), 
- *   Organization:  
- *
- * =====================================================================================
- */
 #include <stdlib.h>
 #include <pthread.h>
 #include <sys/sysinfo.h>
@@ -22,7 +5,7 @@
 #include "utils.h"
 
 struct merge_args {
-	int *array, p, q, r;
+	int *array, *aux_array, p, q, r;
 };
 
 void *merge(void *struct_merge_args) {
@@ -30,9 +13,9 @@ void *merge(void *struct_merge_args) {
 	int p = ((struct merge_args *)struct_merge_args) -> p;
 	int q = ((struct merge_args *)struct_merge_args) -> q;
 	int r = ((struct merge_args *)struct_merge_args) -> r;
-	int *aux_array = (int *)malloc(sizeof(int) * (r - p + 1));
+	int *aux_array = ((struct merge_args *)struct_merge_args) -> aux_array;
 	int i, j, k;
-	for (i = p, j = q + 1, k = 0; i <= q && j <= r; k++) {
+	for (i = p, j = q + 1, k = p; i <= q && j <= r; k++) {
 		if (array[i] < array[j]) {
 			aux_array[k] = array[i];
 			i++;
@@ -41,23 +24,20 @@ void *merge(void *struct_merge_args) {
 			j++;
 		}
 	}
-	for (; i <= q; i++) {
+	for (; i <= q; i++, k++) {
 		aux_array[k] = array[i];
-		k++;
 	}
-	for (; j <= r; j++) {
+	for (; j <= r; j++, k++) {
 		aux_array[k] = array[j];
-		k++;
 	}
-	for (i = 0; i < (r - p + 1); i++) {
-		array[p + i] = aux_array[i];
+	for (i = p; i <= r; i++) {
+		array[i] = aux_array[i];
 	}
-	free(aux_array);
 	return NULL;
 }
 
 struct merge_sort_args {
-	int *array, p, r;
+	int *array, *aux_array, p, r;
 };
 
 void *single_thread_merge_sort(void *args) {
@@ -66,11 +46,12 @@ void *single_thread_merge_sort(void *args) {
 	int middle;
 	if (p -> p < p -> r) {
 		middle = ((p -> p + p -> r) / 2);
-		struct merge_sort_args s1 = {p -> array, p -> p, middle};
-		struct merge_sort_args s2 = {p -> array, middle + 1, p -> r};
+		struct merge_sort_args s1 = {p -> array, p -> aux_array, p -> p, middle};
+		struct merge_sort_args s2 = {p -> array, p -> aux_array, middle + 1, p -> r};
 		single_thread_merge_sort((void *)&s1);
 		single_thread_merge_sort((void *)&s2);
 		m.array = p -> array;
+		m.aux_array = p -> aux_array;
 		m.p = p -> p;
 		m.q = middle;
 		m.r = p -> r;
@@ -82,11 +63,16 @@ void *single_thread_merge_sort(void *args) {
 void multi_thread_merge_sort(int *array, int p, int r, int threads) {
 	pthread_t *thread_ids = (pthread_t *) malloc(sizeof(pthread_t) * threads);
 	struct merge_sort_args *thread_args = (struct merge_sort_args *) malloc(sizeof(struct merge_sort_args) * threads);
+	
+	int size_array = r + 1;
+	int *aux_array = make_array(size_array);
+
 	int i, j;
 	int div = (r + 1) / threads;
 	for (i = 0; i < threads; i++) {
 		thread_args[i].array = array;
 		thread_args[i].p = i * div;
+		thread_args[i].aux_array = aux_array;
 		if (i != 0) {
 			thread_args[i].p += 1;
 		}
@@ -114,6 +100,7 @@ void multi_thread_merge_sort(int *array, int p, int r, int threads) {
 		struct merge_args *m = (struct merge_args *)malloc(sizeof(struct merge_args) * i);
 		for (j = 0; j < i; j++) {
 			m[j].array = array;
+			m[j].aux_array = aux_array;
 			m[j].p = thread_args[j * (threads / i)].p;
 			m[j].q = thread_args[(j * (threads / i)) + ((((j + 1) * (threads / i) - 1) - (j * (threads / i))) / 2)].r;
 			m[j].r = thread_args[(j + 1) * (threads / i) - 1].r;
@@ -125,6 +112,7 @@ void multi_thread_merge_sort(int *array, int p, int r, int threads) {
 		free(m);
 		free(thread_ids);
 	}
+	free(aux_array);
 	free(thread_args);
 }
 
