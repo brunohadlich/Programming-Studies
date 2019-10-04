@@ -18,7 +18,6 @@
 
 struct node {
 	int height;
-	struct node *parent;
 	struct node *left;
 	struct node *right;
 	int value;
@@ -26,4 +25,4 @@ struct node {
 
 int exists(struct node *tree, int value);
 int delete(struct node *tree, int value);
-int insert(struct node *tree, int value);
+struct node *insert(struct node *tree, int value);

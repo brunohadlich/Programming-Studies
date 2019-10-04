@@ -844,10 +844,10 @@ func forcedTypeCastOperator() {//as!
         }
     }
     
-    var dClass: DClass = DClass(p3: 1, p4: 2, p5: 3)
-    var cClass: CClass = dClass
+    let dClass: DClass = DClass(p3: 1, p4: 2, p5: 3)
+    let cClass: CClass = dClass
     //allows to force a downcast
-    var anotherDClass = cClass as! DClass
+    var _ = cClass as! DClass
 }
 
 func optionalTypeCastOperator() {//as?
@@ -996,6 +996,123 @@ func deinitExample() {
     let _ = MyClass()
 }
 
+func guardExample() {
+    //guard is used when it is necessary to assure that a variable/constant is not nil
+    //and in case it is nil the execution flow must stop. That is why inside the else
+    //part of a guard statement you use return or throw, to guarantee there will be no
+    //execution after the statement
+    var v: Int? = 9
+    
+    guard v != nil else {
+        print("var v is nil")
+        return
+    }
+    v = nil
+    guard let tmpV = v else {
+        print("v is nil")
+        return
+    }
+    print("v is not nil. v = \(tmpV)")
+}
+
+func finalClasses() {
+    //Final classes cannot be subclassed
+    //Final prevents other classes from inherit from the final class
+    final class AFinalClass {
+        
+    }
+    //If uncommented the lines below will present a compilation error
+    //class SubClass: AFinalClass {
+    //
+    //}
+}
+
+protocol Protocol: class {//Protocol can only be adopted by classes
+    func foo()
+}
+class MyClass: Protocol {
+    func foo() {
+        print("foo from class C")
+    }
+}
+
+MyClass().foo()
+func classOnlyProtocol() {
+    class MyClass: Protocol {
+        func foo() {
+            print("foo from class C")
+        }
+    }
+    
+    MyClass().foo()
+    //Lines below would not run because Protocol can
+    //only be adopted by classes and not structs
+    /*
+    struct S: Protocol {
+        func foo() {
+            print("foo from struct S")
+        }
+    }
+    
+    S().foo()
+    */
+}
+
+protocol ProtocolRequired {
+    init(p1: Int, p2: Double)
+    func foo()
+}
+func requiredExample() {
+    class MyClass: ProtocolRequired {
+        //This required keyword is necessary because init was defined at protocol
+        //only initializers defined at protocols need required keyword
+        required init(p1: Int, p2: Double) {
+            print("MyClass.init(\(p1), \(p2))")
+        }
+        //In foo function it is not necessary to use required
+        //keyword because it is not an initializer
+        func foo() { }
+    }
+    let m = MyClass(p1: 3, p2: 5.4)
+}
+
+func structsCannotBeChanged() {
+    struct AStruct {
+        var a: Int
+        var b: Double
+    }
+    
+    class AClass{
+        var a: Int
+        var b: Double
+        init(a: Int, b: Double) {
+            self.a = a
+            self.b = b
+        }
+    }
+    
+    //The following code won't compile because parameters of type struct and enum
+    //cannot be modified, they are value types and value types cannot be changed
+    //by other
+    /*
+     func modifyStruct(s: AStruct) {
+     s.a = 23
+     s.b = 21.4
+     }
+     */
+    
+    //On the other hand classes are reference types
+    //and can be changed when passed as parameter
+    func modifyClass(s: AClass) {
+        s.a = 23
+        s.b = 21.4
+    }
+    var c = AClass(a: 6, b: 7.5)
+    print(c)
+    modifyClass(s: c)
+    print(c)
+}
+
 print("variables:")
 variables()
 print("constants:")
@@ -1082,15 +1199,15 @@ print("subscripts:")
 subscripts()
 print("deinitExample:")
 deinitExample()
+print("guardExample:")
+guardExample()
+print("finalClasses:")
+finalClasses()
+print("classOnlyProtocol:")
+classOnlyProtocol()
+print("requiredExample:")
+requiredExample()
+print("structsCannotBeChanged:")
+structsCannotBeChanged()
 //swift structures: class, enum and struct
 //protocols and extensions can only be defined at file scope
-
-func foo(p1: Int, p2: Int?) -> Int {
-    if let pp2 = p2 {
-        return p1 + pp2
-    }
-    return p1
-    
-}
-print(foo(p1: 7, p2: 3))
-print(foo(p1: 4, p2: nil))
