@@ -25,4 +25,7 @@ struct node {
 
 int exists(struct node *tree, int value);
 int delete(struct node *tree, int value);
+void printf_values_inorder(struct node *tree);
+void printf_values_preorder(struct node *tree);
+void printf_values_postorder(struct node *tree);
 struct node *insert(struct node *tree, int value);

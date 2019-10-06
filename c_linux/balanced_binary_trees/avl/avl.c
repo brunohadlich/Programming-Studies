@@ -57,74 +57,77 @@ struct node *new_node(int value) {
 }
 
 struct node *rotate_left(struct node *tree) {
+	printf("\nrotating left: %d", tree -> value);
 	struct node *pivot = tree -> right -> left;
 	tree -> right -> left = tree;
-	tree -> right -> height++;
-	tree -> height--;
+	//tree -> right -> height++;
+	tree -> right -> height;
+	//tree -> height--;
+	tree -> height-=2;
+	struct node *pivot2 = tree -> right;
 	tree -> right = pivot;
-	return tree -> right;
+	return pivot2;
 }
 
 struct node *rotate_right(struct node *tree) {
+	printf("\nrotating right: %d", tree -> value);
 	struct node *pivot = tree -> left -> right;
 	tree -> left -> right = tree;
-	tree -> left -> height++;
-	tree -> height--;
+	//tree -> left -> height++;
+	tree -> left -> height;
+	//tree -> height--;
+	tree -> height-=2;
+	struct node *pivot2 = tree -> left;
 	tree -> left = pivot;
-	return tree -> left;
+	return pivot2;
+}
+
+int get_difference(struct node *tree) {
+	int left_height = 0, right_height = 0;
+
+	if (tree -> left) {
+		left_height = tree -> left -> height;
+		if (tree -> left -> height >= tree -> height) {
+			tree -> height = tree -> left -> height + 1;
+		}
+	}
+
+	if (tree -> right) {
+		right_height = tree -> right -> height;
+		if (tree -> right -> height >= tree -> height) {
+			tree -> height = tree -> right -> height + 1;
+		}
+	}
+
+	return left_height - right_height;
+}
+
+struct node *balance(int value, struct node *tree) {
+	int difference = get_difference(tree);
+	if (difference > 1) {//left-height weighted
+		if (value > tree -> left -> value) {
+			//tree -> left = rotate_left(tree -> left);
+			tree = rotate_left(tree);
+		}
+		return rotate_right(tree);
+	} else if (difference < -1) {//right-height weighted
+		if (value < tree -> right -> value) {
+			//tree -> right = rotate_right(tree -> right);
+			tree = rotate_right(tree);
+		}
+		return rotate_left(tree);
+	}
+	return tree;
 }
 
 struct node *insert(struct node *tree, int value) {
 	if (tree) {
 		if (value <= tree -> value) {
-			if (tree -> left) {
-				tree -> left = insert(tree -> left, value);
-			} else {
-				tree -> left = new_node(value);
-				return tree;
-			}
+			tree -> left = tree -> left ? insert(tree -> left, value) : new_node(value);
 		} else {
-			if (tree -> right) {
-				tree -> right = insert(tree -> right, value);
-			} else {
-				tree -> right = new_node(value);
-				return tree;
-			}
+			tree -> right = tree -> right ? insert(tree -> right, value) : new_node(value);
 		}
-		printf("value: %d\n", value);
-
-		int left_height = 0, right_height = 0;
-
-		if (tree -> left) {
-			left_height = tree -> left -> height;
-			if (tree -> left -> height == tree -> height) {
-				tree -> height = tree -> left -> height + 1;
-			}
-		}
-
-		if (tree -> right) {
-			right_height = tree -> right -> height;
-			if (tree -> right -> height >= tree -> height) {
-				tree -> height = tree -> right -> height + 1;
-			}
-		}
-
-		int difference = left_height - right_height;
-		printf("difference: %d\n", difference);
-
-		if (difference > 1) {//left-height weighted
-			if (value > tree -> left -> value) {
-				tree -> left = rotate_left(tree -> left);
-			}
-			return rotate_right(tree);
-		} else if (difference < -1) {//right-height weighted
-			if (value < tree -> right -> value) {
-				tree -> right = rotate_right(tree -> right);
-			}
-			return rotate_left(tree);
-		}
-
-		return tree;
+		return balance(value, tree);
 	} else {
 		return new_node(value);
 	}
@@ -136,28 +139,65 @@ int depth(struct node *tree) {
 	return result;
 }
 
-void inorder(struct node *tree) {
-	printf("%d\n", tree -> value);
+int depth2(struct node *tree, int height) {
+	printf("\nvalue: %d, height: %d", tree -> value, tree -> height);
+	int h1 = 0, h2 = 0;
 	if (tree -> left) {
-		inorder(tree -> left);
+		h1 = depth2(tree -> left, height + 1);
 	}
 	if (tree -> right) {
-		inorder(tree -> right);
+		h2 = depth2(tree -> right, height + 1);
 	}
+
+	return (h1 > h2 ? h1 : h2) + 1;
+}
+
+void print_values_inorder(struct node *tree) {
+	if (tree -> left) {
+		print_values_inorder(tree -> left);
+	}
+	printf("\n%d", tree -> value);
+	if (tree -> right) {
+		print_values_inorder(tree -> right);
+	}
+}
+
+void print_values_preorder(struct node *tree, int depth) {
+	printf("depth: %d, value: %d", depth, tree -> value);
+	if (tree -> left) {
+		printf("\nleft, ");
+		print_values_preorder(tree -> left, depth + 1);
+	}
+	if (tree -> right) {
+		printf("\nright, ");
+		print_values_preorder(tree -> right, depth + 1);
+	}
+}
+
+void print_values_postorder(struct node *tree) {
+	if (tree -> left) {
+		print_values_postorder(tree -> left);
+	}
+	if (tree -> right) {
+		print_values_postorder(tree -> right);
+	}
+	printf("\n%d", tree -> value);
 }
 
 int main() {
 	struct node *tree = insert(NULL, 1);
-	insert(tree, 2);
-	insert(tree, 3);
-	insert(tree, 4);
-	insert(tree, 5);
-	insert(tree, 6);
-	insert(tree, 7);
-	insert(tree, 8);
-	insert(tree, 9);
-	inorder(tree);
+	int i;
+	for (i = 8; i < 15; i++) {
+		tree = insert(tree, i);
+	}
+	for (i = 2; i < 8; i++) {
+		tree = insert(tree, i);
+	}
+	printf("\n");
+	print_values_preorder(tree, 1);
+	//print_values_inorder(tree);
+	//print_values_postorder(tree);
 
-	//printf("root height: %d", tree -> height);
-	//printf("depth: %d", depth2(tree));
+	printf("\nroot height: %d", tree -> height);
+	printf("\ndepth: %d", depth2(tree, 1));
 }

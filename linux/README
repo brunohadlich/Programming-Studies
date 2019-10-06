@@ -1,1 +1,0 @@
-This project contains c examples for Inter Process Communication methods available at Linux, to compile it just run "gcc file.c -o executable", message_queue.c and shared_memory.c require the flag -lrt so to compile them use "gcc file.c -lrt -o executable", semaphores.c requires flag -pthread.
