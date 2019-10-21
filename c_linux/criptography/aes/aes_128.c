@@ -113,6 +113,10 @@ unsigned char table_L_index(unsigned char row, unsigned char col) {
 	return table_L[row * 16 + col];
 }
 
+unsigned char table_E_index(unsigned char row, unsigned char col) {
+	return table_E[row * 16 + col];
+}
+
 unsigned char *word(unsigned char *key, int index) {
 	return &(key[index * 4]);
 }
@@ -149,6 +153,12 @@ unsigned char mapped_byte_table_L(unsigned char b) {
 	unsigned char most_significant_nibble = (b & 0b11110000) >> 4;
 	unsigned char least_significant_nibble = (b & 0b00001111);
 	return table_L_index(most_significant_nibble, least_significant_nibble);
+}
+
+unsigned char mapped_byte_table_E(unsigned char b) {
+	unsigned char most_significant_nibble = (b & 0b11110000) >> 4;
+	unsigned char least_significant_nibble = (b & 0b00001111);
+	return table_E_index(most_significant_nibble, least_significant_nibble);
 }
 
 unsigned char *map_word(unsigned char *word) {
@@ -253,19 +263,29 @@ void mix_columns_step(unsigned char *shift_rows_matrix, unsigned char *mix_colum
 	for (i = 0; i < 4; i++) {
 		for (j = 0; j < 4; j++) {
 			for (k = 0; k < 4; k++) {
-				unsigned char r1 = mapped_byte_table_L();
-				unsigned char multiplier = mapped_byte_table_L();
+				unsigned char r1 = mapped_byte_table_L(shift_rows_matrix[i * 4 + k]);
+				unsigned char multiplier = mapped_byte_table_L(mix_columns_matrix[j + (4 * k)]);
 				unsigned char result;
-				if (((unsigned int)r1 + (unsigned int)multitplier) > 255) {
-					result = 255;
-				} else {
-					result = r1 + multiplier;
-				}
+/*
+                if ((r1 == 0) || (multiplier == 0)) {
+                    result = 0;
+                } else if (r1 == 1) {
+                    result = multiplier;
+                } else if (multiplier == 1) {
+                    result = r1;
+                } else {
+*/
+                    if (((unsigned int)r1 + (unsigned int)multiplier) > 255) {
+                        result = 255;
+                    } else {
+                        result = r1 + multiplier;
+                    }
+//                }
+                result = mapped_byte_table_E(result);
 				mix_columns_matrix[i * 4 + j] ^= result;
 			}
 		}
 	}
-//	mix_columns_matrix[0] = 
 }
 
 void set_matrix(unsigned char *matrix, unsigned char value) {
@@ -302,5 +322,6 @@ int main() {
 	unsigned char *mix_columns_matrix = (unsigned char *) malloc(sizeof(unsigned char) * 16);
 	set_matrix(mix_columns_matrix, 0);
 	mix_columns_step(shift_rows_matrix, mix_columns_matrix);
+	print_key(mix_columns_matrix);
 
 }
