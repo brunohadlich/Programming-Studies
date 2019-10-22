@@ -98,7 +98,7 @@ unsigned char table_E[256] = {
 	0x39, 0x4b, 0xdd, 0x7c, 0x84, 0x97, 0xa2, 0xfd, 0x1c, 0x24, 0x6c, 0xb4, 0xc7, 0x52, 0xf6, 0x01
 };
 
-unsigned char mix_columns_matrix[16] = {
+unsigned char mix_columns_table[16] = {
 	2, 3, 1, 1,
 	1, 2, 3, 1,
 	1, 1, 2, 3,
@@ -121,13 +121,11 @@ unsigned char *word(unsigned char *key, int index) {
 	return &(key[index * 4]);
 }
 
-unsigned char *clone_word(unsigned char word[4]) {
-	unsigned char *new_word = (unsigned char *) malloc(sizeof(unsigned char) * 4);
-	new_word[0] = word[0];
-	new_word[1] = word[1];
-	new_word[2] = word[2];
-	new_word[3] = word[3];
-	return new_word;
+unsigned char *cpy_word(unsigned char *from, unsigned char *to) {
+	to[0] = from[0];
+	to[1] = from[1];
+	to[2] = from[2];
+	to[3] = from[3];
 }
 
 unsigned char *rot_word_left(unsigned char *word) {
@@ -176,8 +174,7 @@ void map_matrix(unsigned char *matrix) {
 	}
 }
 
-unsigned char *round_constant(int round_key_index) {
-	unsigned char *word = (unsigned char *) malloc(sizeof(unsigned char) * 4);
+void round_constant(unsigned char *word, int round_key_index) {
 	if (round_key_index < 8) {
 		word[0] = 1 << round_key_index;
 	} else if (round_key_index == 8) {
@@ -188,7 +185,6 @@ unsigned char *round_constant(int round_key_index) {
 	word[1] = 0;
 	word[2] = 0;
 	word[3] = 0;
-	return word;
 }
 
 void xor_words(unsigned char *w1, unsigned char *w2, unsigned char *to) {
@@ -206,10 +202,14 @@ void xor_keys(unsigned char *key1, unsigned char *key2, unsigned char *to) {
 }
 
 void set_cur_round_key(struct round_key *prev_key, struct round_key *cur_key, int idx_cur_key) {
-	unsigned char *last_word_prev_key = clone_word(prev_key -> word3);
+	unsigned char last_word_prev_key[4];
+	cpy_word(prev_key -> word3, last_word_prev_key);
+
 	unsigned char *rotated_word = rot_word_left(last_word_prev_key);
 	unsigned char *mapped_word = map_word(rotated_word);
-	unsigned char *word_constant = round_constant(idx_cur_key - 1);
+
+	unsigned char word_constant[4];
+	round_constant(&word_constant, idx_cur_key - 1);
 
 	xor_words(mapped_word, word_constant, (unsigned char *)&(cur_key -> word0));
 	xor_words((unsigned char *)&(prev_key -> word0), (unsigned char *)&(cur_key -> word0), (unsigned char *)&(cur_key -> word0));
@@ -260,30 +260,39 @@ void shift_matrix_rows(unsigned char *matrix) {
 
 void mix_columns_step(unsigned char *shift_rows_matrix, unsigned char *mix_columns_matrix) {
 	int i, j, k;
+	//i == column
+	//j == row
 	for (i = 0; i < 4; i++) {
 		for (j = 0; j < 4; j++) {
 			for (k = 0; k < 4; k++) {
-				unsigned char r1 = mapped_byte_table_L(shift_rows_matrix[i * 4 + k]);
-				unsigned char multiplier = mapped_byte_table_L(mix_columns_matrix[j + (4 * k)]);
+				unsigned char term1 = shift_rows_matrix[i * 4 + k];
+				unsigned char term2 = mix_columns_table[j * 4 + k];
+				unsigned char mapped_term1 = mapped_byte_table_L(term1);
+				unsigned char mapped_term2 = mapped_byte_table_L(term2);
 				unsigned char result;
-/*
-                if ((r1 == 0) || (multiplier == 0)) {
-                    result = 0;
-                } else if (r1 == 1) {
-                    result = multiplier;
-                } else if (multiplier == 1) {
-                    result = r1;
-                } else {
-*/
-                    if (((unsigned int)r1 + (unsigned int)multiplier) > 255) {
-                        result = 255;
-                    } else {
-                        result = r1 + multiplier;
-                    }
-//                }
-                result = mapped_byte_table_E(result);
+
+				if (term1 == 0 || term2 == 0) {
+				    result = 0;
+				} else if (term1 == 1) {
+				    result = mapped_term2;
+				} else if (term2 == 1) {
+				    result = mapped_term1;
+				} else {
+					if (((unsigned int)mapped_term1 + (unsigned int)mapped_term2) > 255) {
+						//result = 255;
+						result = (unsigned char)((unsigned int)mapped_term1 + (unsigned int)mapped_term2 - 255);
+					} else {
+						result = mapped_term1 + mapped_term2;
+					}
+				}
+				printf("term1: %x, term2: %x, mapped_term1: %x, mapped_term2: %x, result: %x, table E: %x\n", term1, term2, mapped_term1, mapped_term2, result, mapped_byte_table_E(result));
+				result = mapped_byte_table_E(result);
+				if (term1 == 0 || term2 == 0) {
+				    result = 0;
+				}
 				mix_columns_matrix[i * 4 + j] ^= result;
 			}
+			printf("%x\n", mix_columns_matrix[i * 4 + j]);
 		}
 	}
 }
@@ -302,26 +311,37 @@ int main() {
 	set_round_keys(&key, &round_keys);
 
 	//xor matrix
-	unsigned char *xor_original_matrix_round_key_0 = (unsigned char *) malloc(sizeof(unsigned char) * 16);
-	xor_keys((unsigned char *)&(round_keys[0]), texto, xor_original_matrix_round_key_0);
-	print_key(xor_original_matrix_round_key_0);
+	unsigned char *xor_original_matrix_round_key = (unsigned char *) malloc(sizeof(unsigned char) * 16);
+	xor_keys((unsigned char *)&(round_keys[0]), texto, xor_original_matrix_round_key);
+	print_key(xor_original_matrix_round_key);
 
+	unsigned char *mix_columns_matrix = (unsigned char *) malloc(sizeof(unsigned char) * 16);
+	int i;
+	for (i = 1; i < 10; i++) {
+		//sub_bytes matrix
+		map_matrix(xor_original_matrix_round_key);
+
+		//shift_rows matrix
+		shift_matrix_rows(xor_original_matrix_round_key);
+
+		//mix_columns matrix
+
+		set_matrix(mix_columns_matrix, 0);
+		mix_columns_step(xor_original_matrix_round_key, mix_columns_matrix);
+
+		print_key(mix_columns_matrix);
+
+		xor_keys((unsigned char *)&(round_keys[i]), mix_columns_matrix, xor_original_matrix_round_key);
+		print_key(xor_original_matrix_round_key);
+	}
+	free(mix_columns_matrix);
 	//sub_bytes matrix
-	unsigned char *sub_bytes_matrix = (unsigned char *) malloc(sizeof(unsigned char) * 16);
-	cpy_matrix(xor_original_matrix_round_key_0, sub_bytes_matrix);
-	map_matrix(sub_bytes_matrix);
-	print_key(sub_bytes_matrix);
+	map_matrix(xor_original_matrix_round_key);
 
 	//shift_rows matrix
-	unsigned char *shift_rows_matrix = (unsigned char *) malloc(sizeof(unsigned char) * 16);
-	cpy_matrix(sub_bytes_matrix, shift_rows_matrix);
-	shift_matrix_rows(shift_rows_matrix);
-	print_key(shift_rows_matrix);
+	shift_matrix_rows(xor_original_matrix_round_key);
 
-	//mix_columns matrix
-	unsigned char *mix_columns_matrix = (unsigned char *) malloc(sizeof(unsigned char) * 16);
-	set_matrix(mix_columns_matrix, 0);
-	mix_columns_step(shift_rows_matrix, mix_columns_matrix);
-	print_key(mix_columns_matrix);
-
+	xor_keys((unsigned char *)&(round_keys[i]), xor_original_matrix_round_key, xor_original_matrix_round_key);
+	print_key(xor_original_matrix_round_key);
+	free(xor_original_matrix_round_key);
 }
