@@ -10,13 +10,14 @@
  *       Revision:  none
  *       Compiler:  gcc
  *
- *         Author:  YOUR NAME (), 
+ *         Author:  Bruno Simas Hadlich, 
  *   Organization:  
  *
  * =====================================================================================
  */
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 struct round_key {
 	unsigned char word0[4];
@@ -285,14 +286,13 @@ void mix_columns_step(unsigned char *shift_rows_matrix, unsigned char *mix_colum
 						result = mapped_term1 + mapped_term2;
 					}
 				}
-				printf("term1: %x, term2: %x, mapped_term1: %x, mapped_term2: %x, result: %x, table E: %x\n", term1, term2, mapped_term1, mapped_term2, result, mapped_byte_table_E(result));
+				//printf("term1: %x, term2: %x, mapped_term1: %x, mapped_term2: %x, result: %x, table E: %x\n", term1, term2, mapped_term1, mapped_term2, result, mapped_byte_table_E(result));
 				result = mapped_byte_table_E(result);
 				if (term1 == 0 || term2 == 0) {
 				    result = 0;
 				}
 				mix_columns_matrix[i * 4 + j] ^= result;
 			}
-			printf("%x\n", mix_columns_matrix[i * 4 + j]);
 		}
 	}
 }
@@ -304,44 +304,80 @@ void set_matrix(unsigned char *matrix, unsigned char value) {
 	}
 }
 
-int main() {
-	struct round_key key = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'};
-	unsigned char texto[16] = "DESENVOLVIMENTO!";
-	struct round_key round_keys[11];
-	set_round_keys(&key, &round_keys);
-
+void encrypt(unsigned char *original_block, unsigned char *encrypted_block, struct round_key *round_keys) {
 	//xor matrix
-	unsigned char *xor_original_matrix_round_key = (unsigned char *) malloc(sizeof(unsigned char) * 16);
-	xor_keys((unsigned char *)&(round_keys[0]), texto, xor_original_matrix_round_key);
-	print_key(xor_original_matrix_round_key);
+	xor_keys((unsigned char *)&(round_keys[0]), original_block, encrypted_block);
 
-	unsigned char *mix_columns_matrix = (unsigned char *) malloc(sizeof(unsigned char) * 16);
+	unsigned char mix_columns_matrix[16];
 	int i;
 	for (i = 1; i < 10; i++) {
 		//sub_bytes matrix
-		map_matrix(xor_original_matrix_round_key);
+		map_matrix(encrypted_block);
 
 		//shift_rows matrix
-		shift_matrix_rows(xor_original_matrix_round_key);
+		shift_matrix_rows(encrypted_block);
 
 		//mix_columns matrix
-
 		set_matrix(mix_columns_matrix, 0);
-		mix_columns_step(xor_original_matrix_round_key, mix_columns_matrix);
+		mix_columns_step(encrypted_block, mix_columns_matrix);
 
-		print_key(mix_columns_matrix);
+		xor_keys((unsigned char *)&(round_keys[i]), mix_columns_matrix, encrypted_block);
 
-		xor_keys((unsigned char *)&(round_keys[i]), mix_columns_matrix, xor_original_matrix_round_key);
-		print_key(xor_original_matrix_round_key);
 	}
-	free(mix_columns_matrix);
 	//sub_bytes matrix
-	map_matrix(xor_original_matrix_round_key);
+	map_matrix(encrypted_block);
 
 	//shift_rows matrix
-	shift_matrix_rows(xor_original_matrix_round_key);
+	shift_matrix_rows(encrypted_block);
 
-	xor_keys((unsigned char *)&(round_keys[i]), xor_original_matrix_round_key, xor_original_matrix_round_key);
-	print_key(xor_original_matrix_round_key);
-	free(xor_original_matrix_round_key);
+	xor_keys((unsigned char *)&(round_keys[i]), encrypted_block, encrypted_block);
+}
+
+void encrypt_file(FILE *from, FILE *to, unsigned char *key) {
+	struct round_key round_keys[11];
+	set_round_keys(key, &round_keys);
+
+	unsigned char original_block[16];
+	unsigned char encrypted_block[16];
+
+	while (1) {
+		int c = fread(original_block, 1, 16, from);
+		if (c != 16) {
+			int i, missing_chars = 16 - c;
+			for (i = c; i < 16; i++) {
+				original_block[i] = missing_chars;
+			}
+			encrypt(original_block, encrypted_block, round_keys);
+			fwrite(encrypted_block, 1, 16, to);
+			break;
+		} else {
+			encrypt(original_block, encrypted_block, round_keys);
+			fwrite(encrypted_block, 1, 16, to);
+		}
+	}
+}
+
+int main(int argc, char *argv[]) {
+	if (argc != 4) {
+		printf("Favor usar o formato \"aes <arquivo_origem> <arquivo_criptografado> <chave>\"");
+	}
+	FILE *from = fopen(argv[1], "r");
+	FILE *to = fopen(argv[2], "w");
+	unsigned char key[16];
+
+	char *key_sep_commas = argv[3];
+	int i = 0, k = 0;
+	while (1) {
+		if (key_sep_commas[i] == ',') {
+			key_sep_commas[i] = NULL;
+			key[k++] = (unsigned char)atoi(key_sep_commas);
+			key_sep_commas = &(key_sep_commas[i + 1]);
+			i = 0;
+		} else if (key_sep_commas[i] == NULL) {
+			key[k++] = (unsigned char)atoi(key_sep_commas);
+			break;
+		}
+		i++;
+	}
+	encrypt_file(from, to, key);
 }
