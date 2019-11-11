@@ -33,7 +33,7 @@ func preLoadedArrays() {
     //listExample2[1] = 5
 }
 
-func emptyinitializedArrays() {
+func emptyInitializedArrays() {
     var l:[String] = [String]()
     
     l.append(String(1))
@@ -45,7 +45,7 @@ func emptyinitializedArrays() {
 
 func arrays() {
     preLoadedArrays()
-    emptyinitializedArrays()
+    emptyInitializedArrays()
 }
 
 func dictionaries() {
@@ -215,7 +215,7 @@ func classInheritance() {
     let m: MyClass = MyClass2(x: 8)
     m.foo()
     //Line below would not work because although MyClass2 instance was assigned
-    //to m, the type of m is MyClass and it does not have such function
+    //to m, the type of m is MyClass and it does not have such function:
     //m.bar()
     let m2: MyClass2 = MyClass2(x: 5)
     m2.foo()
@@ -1062,6 +1062,7 @@ protocol ProtocolRequired {
     init(p1: Int, p2: Double)
     func foo()
 }
+
 func requiredExample() {
     class MyClass: ProtocolRequired {
         //This required keyword is necessary because init was defined at protocol
@@ -1093,7 +1094,7 @@ func structsCannotBeChanged() {
     
     //The following code won't compile because parameters of type struct and enum
     //cannot be modified, they are value types and value types cannot be changed
-    //by other
+    //inside functions when passed as parameters
     /*
      func modifyStruct(s: AStruct) {
      s.a = 23
