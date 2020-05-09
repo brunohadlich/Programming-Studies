@@ -359,7 +359,8 @@ void encrypt_file(FILE *from, FILE *to, unsigned char *key) {
 
 int main(int argc, char *argv[]) {
 	if (argc != 4) {
-		printf("Favor usar o formato \"aes <arquivo_origem> <arquivo_criptografado> <chave>\"");
+		printf("Favor usar o formato \"aes <arquivo_origem> <arquivo_criptografado> <chave>\"\n");
+		return 0;
 	}
 	FILE *from = fopen(argv[1], "r");
 	FILE *to = fopen(argv[2], "w");
@@ -380,4 +381,5 @@ int main(int argc, char *argv[]) {
 		i++;
 	}
 	encrypt_file(from, to, key);
+	return 0;
 }

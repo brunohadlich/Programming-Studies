@@ -30,13 +30,13 @@ strutils instead of (str-utils, str_utils or strUtils).
 package main
 
 //Imports can be made line by line or multiline
-//The following multiline comment express a line by line import:
+//line by line import example:
 /*
 import "fmt"
 import "reflect"
 */
 
-//multiline example
+//multiline import example
 import (
 	"fmt"
 	"reflect"
@@ -217,10 +217,35 @@ func strings() {
 }
 
 func packages() {
-	//Example of 
+	/*
+	calling ReturnString that is in file just_a_file1.go of the directory
+	package1, with package name file1. Although the directory name is
+	package1, the files inside it define the package name file1 and that is
+	why we refer to the resources of the go files inside this directory by
+	the package name file1
+	*/
 	fmt.Println(file1.ReturnString())
-	//This line won't work because it is necessary to specify package name
+	//Line below won't work because it is necessary to specify package name
 	//fmt.Println(ReturnString())
+}
+
+func (s *struct_f2)function_of_struct_f2 {
+	fmt.Printf("just a function that can be called from any struct_f2 var")
+	fmt.Printf("printing variables from struct_f2; v1=%d; v3=%d", s.v1, s.v3)
+}
+
+/*
+init a functions that are executed at module initialization, it does not take
+any parameter and return no value, it can not be called from anyplace and is
+only used by GO
+*/
+func init() {
+	fmt.Print\n("first init.")
+}
+
+//there can be more than one init, they will be executed in order of appearance
+func init() {
+	fmt.Print\n("second init.")
 }
 
 //entry function of any go software

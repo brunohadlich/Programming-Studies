@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 
 void slow() {
         char *v = malloc(100000000);
@@ -43,7 +44,16 @@ void very_fast() {
 }
 
 int main() {
-        //slow();
-        //fast();
+	clock_t t0 = clock();
+        slow();
+	clock_t t1 = clock();
+	printf("Slow version takes %lu clocks\n", t1 - t0);
+	t0 = clock();
+        fast();
+	t1 = clock();
+	printf("Fast version takes %lu clocks\n", t1 - t0);
+	t0 = clock();
 	very_fast();
+	t1 = clock();
+	printf("Very fast version takes %lu clocks\n", t1 - t0);
 }
