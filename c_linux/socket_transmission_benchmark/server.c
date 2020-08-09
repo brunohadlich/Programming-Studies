@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -37,17 +38,28 @@ int main(int argc, char *argv[])
          error("ERROR on binding");
      listen(sockfd, 5);
      clilen = sizeof(cli_addr);
+		 printf("\n");
      newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
      if (newsockfd < 0) 
           error("ERROR on accept");
      bzero(buffer, 256);
-     n = read(newsockfd, buffer, 255);
-     if (n < 0)
-			   error("ERROR reading from socket");
-     printf("Here is the message: %s\n", buffer);
-     n = write(newsockfd, "I got your message", 18);
-     if (n < 0)
-			   error("ERROR writing to socket");
+     if ((n = read(newsockfd, buffer, 255)) >= 2) {
+			 time_t t1, t0 = clock();
+			 long bandwidth = 0;
+			 while ((n = read(newsockfd, buffer, 255)) >= 2) {
+				 bandwidth += n;
+				 t1 = clock();
+				 if (t1 - t0 > 10 * CLOCKS_PER_SEC) {
+					 break;
+				 }
+			 }
+			 printf("%ld\n", t0);
+			 printf("%ld\n", t1);
+			 printf("%ld\n", CLOCKS_PER_SEC);
+			 //printf("Received %ld in %ld second(s)", bandwidth, (t1 - t0) / CLOCKS_PER_SEC);
+			 printf("Received %ld in %ld second(s)", bandwidth, (t1 - t0) / CLOCKS_PER_SEC);
+		 }
+     printf("Connection closed\n");
      close(newsockfd);
      close(sockfd);
      return 0; 
