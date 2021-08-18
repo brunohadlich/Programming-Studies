@@ -20,25 +20,23 @@ int main(int argc, char **argv) {
         perror("inotify_init");
     }
 
-    wd = inotify_add_watch(fd, "/home/bruno/teste",
-        IN_MODIFY | IN_CREATE | IN_DELETE);
+    wd = inotify_add_watch(fd, "/home/bruno/teste", IN_MODIFY | IN_CREATE | IN_DELETE);
     length = read(fd, buffer, BUF_LEN);
 
     while (length >= 0) {
 	    i = 0;
 	    while (i < length) {
-		struct inotify_event *event =
-		    (struct inotify_event *) &buffer[i];
-		if (event->len) {
-		    if (event->mask & IN_CREATE) {
-			printf("The file %s was created.\n", event->name);
-		    } else if (event->mask & IN_DELETE) {
-			printf("The file %s was deleted.\n", event->name);
-		    } else if (event->mask & IN_MODIFY) {
-			printf("The file %s was modified.\n", event->name);
-		    }
-		}
-		i += EVENT_SIZE + event->len;
+            struct inotify_event *event = (struct inotify_event *) &buffer[i];
+            if (event->len) {
+                if (event->mask & IN_CREATE) {
+                    printf("The file %s was created.\n", event->name);
+                } else if (event->mask & IN_DELETE) {
+                    printf("The file %s was deleted.\n", event->name);
+                } else if (event->mask & IN_MODIFY) {
+                    printf("The file %s was modified.\n", event->name);
+                }
+            }
+            i += EVENT_SIZE + event->len;
 	    }
 	    length = read(fd, buffer, BUF_LEN);
     }

@@ -244,13 +244,9 @@ int main()
 
 	cin >> u;
 	cout << u << endl;
-	
-	
-	
-	cout << "cerr: " << cerr << endl;
-	cout << "clog: " << clog << endl;
-	cout << "cin: "<< cin << endl;
-	cout << "cout: " << cout << endl;	
+	cout << "cout" << endl;
+	cerr << "cerr" << endl;
+	clog << "clog" << endl;
 	
 	//stringstream
 	

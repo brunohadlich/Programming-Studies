@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 
+//This example was taken from "man pipe" command
 int main(int argc, char **argv) {
 	int fd[2];
 	//fd[0] is the reading end file descriptor
