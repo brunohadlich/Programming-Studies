@@ -1,0 +1,1145 @@
+//describe databases
+show dbs
+
+//Change to the given database, it doesn't matter whether it exists or not, if it does not exist it will be created
+use shop
+
+//insert one document to the collection products, if the colletion does not exist it will be created on the fly
+db.products.insertOne({name: "A Book", price: 37.40})
+
+//insert more than one document to the collection products, if the colletion does not exist it will be created on the fly
+db.products.insertMany([{name: "Another Book", price: 24.50, subject: "science"}, {name: "Another Book volume 2", price: 37.40}])
+
+//example of inserting nested documents
+db.products.insertOne({name: "A Computer", price: 1543.27, description: "A high quality computer.", details: {cpu: "intel i7 10700k", memory: 16}})
+
+//updates a single document in colletion products, the document that matches name "A Computer", $set is an operator
+//$set tells that only the field price must be updated, the rest of the fields in the document must remain as they are
+//$set will create a new field in the document if the field does not exist
+db.products.updateOne({name: "A Computer"}, {$set: {price: 1550}})
+
+//updates all documents in collection products that matches price == 1550 and set them to price == 2000, the rest
+//of the fields in the documents will remain as they are
+db.products.updateMany({price: 1550}, {$set: {price: 2000}})
+
+//list all documents in collection products
+db.products.find()
+
+//list all documents in collection products in a more readable way
+db.products.find().pretty()
+
+//list all documents in collection products that have a price equals to 2000
+db.products.find({price: 2000}).pretty()
+
+//list all documents in collection products that have a price greater than 30 by using operator $gt
+db.products.find({price: {$gt: 30}}).pretty()
+
+//Returns only the first document in collection products that has a price greater than 30 by using operator $gt
+db.products.findOne({price: {$gt: 30}})
+
+//find does not bring all documents but a cursor that allows cycling through the documents one at a time,
+//that is more efficient than returning all documents when the collection is too big, if you really need
+//all documents use toArray() function, otherwise use forEach(func)
+db.products.find().toArray()
+db.products.find().forEach((doc) => {printjson(doc)})
+
+//projection is a way to define which fields must be retrieved, in this case only the name and _id will
+//be retrieved, price wil not, to do not return _id you have to pass _id: 0 to the projection argument
+db.products.find({}, {name: 1}).toArray()
+
+//By adding .details after findOne call we can access this specific field of the document
+db.products.findOne({name: "A Computer"}).details
+
+//It is possible to match a field of a nested object by using dot notation like in the following example
+db.products.findOne({"details.memory": 16})
+
+//Delete a single document in colletion products, the first found document that matches name "A Computer"
+db.products.deleteOne({name: "A Computer"})
+
+//findOne(filters) function will identify that the colors field is an array and will return the document
+//if one of the values of the array matches the filter
+db.products.insertOne({name: "TV", colors: ["black", "red", "blue"]})
+db.products.findOne({colors: "red"})
+
+//In collection products delete all documents that match the filter argument, in this case the argument
+//is an empty object, that means all documents will be deleted
+db.products.deleteMany({})
+
+//Drop specifically products colletion
+db.products.drop()
+
+use dataTypes
+
+db.typesExamples.insertOne({
+	aText: "Text",
+	aBoolean: true,
+	aDouble: 32.4,
+	aDouble2: 37,
+	aInt: NumberInt(37),
+	aLong: NumberLong(37),
+	aObject: {a:1,b:2},
+	aList:[1,2,3,4],
+	aListOfObjects: [{a:1,b:2}, {c:3, d:4}],
+	aDate: new Date(),
+	aTimestamp: new Timestamp()
+})
+
+typeof db.typesExamples.findOne({}).aText
+typeof db.typesExamples.findOne({}).aBoolean
+typeof db.typesExamples.findOne({}).aDouble
+typeof db.typesExamples.findOne({}).aDouble2
+typeof db.typesExamples.findOne({}).aInt
+typeof db.typesExamples.findOne({}).aLong
+typeof db.typesExamples.findOne({}).aObject
+typeof db.typesExamples.findOne({}).aList
+typeof db.typesExamples.findOne({}).aListOfObjects
+typeof db.typesExamples.findOne({}).aDate
+typeof db.typesExamples.findOne({}).aTimestamp
+
+use book_shop
+
+db.authors.insertOne({_id: 1, name: "Katsuhiro Otomo"})
+db.books.insertOne({_id: 1, name: "Akira", authors: [1]})
+
+//with aggregate we can retrieve in a single query data that is related but spread across
+//multiple collections, in this example we get the book data and its author information
+db.books.aggregate([{
+	$lookup: {
+		from: "authors",
+		localField: "authors",
+		foreignField: "_id",
+		as: "creators"
+	}
+}])
+
+db.authors.drop()
+db.authors.insertOne({name: "Bruno"})
+db.authors.insertOne({name: "Emanuel"})
+
+//creates a collection and defines a schema with required fields and their types
+db.createCollection("posts", {
+	validator: {
+		$jsonSchema: {
+			bsonType: "object",
+			required: ["title", "text", "creator", "comments"],
+			properties: {
+				title: {
+					bsonType: "string",
+					description: "must be a string and it is required"
+				},
+				text: {
+					bsonType: "string",
+					description: "must be a string and it is required"
+				},
+				creator: {
+					bsonType: "objectId",
+					description: "must be an objectId and it is required"
+				},
+				comments: {
+					bsonType: "array",
+					description: "must be an array and it is required",
+					items: {
+						bsonType: "object",
+						properties: {
+							text: {
+								bsonType: "string",
+								description: "must be a string and it is required",
+							},
+							author: {
+								bsonType: "objectId",
+								description: "must be an objectId and it is required",
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+})
+
+//this will work because satisfies the schema defines above
+db.posts.insertOne({title: "My first post!", text: "A nice litle post.", creator: db.authors.findOne({name: "Bruno"})._id, comments: [{text: "A comment", author: db.authors.findOne({name: "Emanuel"})._id}]})
+//this will fail because does not satisfy the required fields
+db.posts.insertOne({title: "My second post!"})
+
+//with db.runCommand() we can modify a collection schema by using key "collMod" and the collection name as its value
+db.runCommand({
+	collMod: "posts",
+	validator: {
+		$jsonSchema: {
+			bsonType: "object",
+			required: ["title", "text", "creator", "comments"],
+			properties: {
+				title: {
+					bsonType: "string",
+					description: "must be a string and it is required"
+				},
+				text: {
+					bsonType: "string",
+					description: "must be a string and it is required"
+				},
+				creator: {
+					bsonType: "objectId",
+					description: "must be an objectId and it is required"
+				},
+				comments: {
+					bsonType: "array",
+					description: "must be an array and it is required",
+					items: {
+						bsonType: "object",
+						properties: {
+							text: {
+								bsonType: "string",
+								description: "must be a string and it is required",
+							},
+							author: {
+								bsonType: "objectId",
+								description: "must be an objectId and it is required",
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	validationAction: "warn"
+})
+
+db.insertErrorExamples.insertOne({_id: 1, description: "abc"})
+db.insertErrorExamples.insertOne({_id: 2, description: "abc"})
+db.insertErrorExamples.insertOne({_id: 3, description: "abc"})
+
+db.insertErrorExamples.find().pretty()
+
+//This line will fail because id 1 already exists
+db.insertErrorExamples.insertOne({_id: 1, description: "abc"})
+
+//This line will insert the element of id 4 then will fail to add the second element of id 1,
+//the element of id 5 will not be added because the previous element failed to be inserted
+db.insertErrorExamples.insertMany([{_id: 4, description: "abc"}, {_id: 1, description: "abc"}, {_id: 5, description: "abc"}])
+
+db.insertErrorExamples.find().pretty()
+
+//Passing the optional argument ordered == false tells mongo to continue the insertions even if one of the elements insertion
+//failed. The following line will fail to insert the element of id 1 because it already exists but will continue to add the
+//elements of id 5 and 6 and they will succeed
+db.insertErrorExamples.insertMany([{_id: 1, description: "abc"}, {_id: 5, description: "abc"}, {_id: 6, description: "abc"}], {ordered: false})
+
+//By using writeConcern with w:0 you tell mongo that you are not worried if the insert operations worked or not
+//This is extremely fast because there is no wait for the response of the server but on the other the write operation
+//may not have reached the server or it did reach the server but an error happened and it failed, in this case you
+//won't know that
+db.persons.insertOne({_id: 1, name: "José", age: 25}, {writeConcern: {w: 0}})
+
+//This line will fail because the id 1 already exists in persons collection but we will not be told that because
+//writeConcern w:0 makes the shell not to await for a response
+db.persons.insertOne({_id: 1, name: "José", age: 25}, {writeConcern: {w: 0}})
+
+//With this line we will know that the operation failed because of the writeConcern w:1
+db.persons.insertOne({_id: 1, name: "José", age: 25}, {writeConcern: {w: 0}})
+
+//The argument writeConcert j:1 makes the shell to procceed only after it is guaranteed that the write operations was
+//written on the journal, if false it will still be written to the journal but the operation will run asynchronous
+//and will not wait for that to procceed. If journal is set to true and w is set to 0, mongo will force w to be equals 1
+db.persons.insertOne({_id: 1, name: "José", age: 25}, {writeConcern: {w: 1, j: true}})
+
+//wtimeout tells that if the operations takes more than 200 milliseconds it must fail even if at the end the
+//write succeeds
+db.persons.insertOne({_id: 1, name: "José", age: 25}, {writeConcern: {w: 1, j: true, wtimeout: 200}})
+
+use companyDB
+
+db.companies.insertOne({_id: 1, name: "Google"})
+db.companies.insertMany([{_id: 2, name: "Facebook"}, {_id: 3, name: "Amazon"}])
+
+db.companies.insertMany([{_id: 3, name: "Facebook"}, {_id: 4, name: "Microsoft"}])
+db.companies.insertMany([{_id: 3, name: "Facebook"}, {_id: 4, name: "Microsoft"}], {ordered: false})
+
+db.companies.insertOne({_id: 5, name: "Tesla"}, {writeConcern: {w: 1, j: false}})
+db.companies.insertOne({_id: 6, name: "SpaceX"}, {writeConcern: {w: 1, j: true}})
+
+use movieData
+
+//filter by equals
+db.movies.find({runtime: 60}).pretty()
+
+//filter by equals
+db.movies.find({runtime: {$eq: 60}}).pretty()
+
+//filter by not equals
+db.movies.find({runtime: {$ne: 60}}).pretty()
+
+//filter by greater than
+db.movies.find({runtime: {$gt: 60}}).pretty()
+
+//filter by greater than or equals
+db.movies.find({runtime: {$gte: 60}}).pretty()
+
+//filter by less than
+db.movies.find({runtime: {$lt: 60}}).pretty()
+
+//filter by less than or equals
+db.movies.find({runtime: {$lte: 60}}).pretty()
+
+//filter movies with average rating more than 7
+db.movies.find({"rating.average": {$gt: 7}})
+
+//filter movies with at least one genre equal to Drama, here genres is an array
+db.movies.find({genres: "Drama"})
+
+//Same as the previous search
+db.movies.find({genres: {$in: ["Drama"]}})
+
+//Here we look for movies with genre Drama and/or Anime
+db.movies.find({genres: {$in: ["Drama", "Anime"]}})
+
+//By putting ["Drama"] we get only the movies that have a single genre and this genre is Drama
+//it is different from "Drama" that will return movies that have Drama as a genre but may have
+//other genres too
+db.movies.find({genres: ["Drama"]})
+
+//$nin will return movies that do not belong to Drama and Anime genres
+db.movies.find({genres: {$nin: ["Drama", "Anime"]}})
+
+//Query movies with average rating less than 5 or greater than 7
+db.movies.find({$or: [{"rating.average": {$lt: 5}}, {"rating.average": {$gt: 7}}]})
+
+//Here we use $nor to return movies that do not have average rating of less than 5 nor greater than 7
+db.movies.find({$nor: [{"rating.average": {$lt: 5}}, {"rating.average": {$gt: 7}}]})
+
+//Query movies with genre of Drama and/or Anime and average rating greater than 7
+db.movies.find({$and: [{genres: {$in: ["Drama", "Anime"]}}, {"rating.average": {$gt: 7}}]})
+
+//Same as previous query but without using $and operator
+db.movies.find({genres: {$in: ["Drama", "Anime"]}, "rating.average": {$gt: 7}})
+
+//Query movies with a runtime not equal to 60
+db.movies.find({runtime: {$not: {$eq: 60}}}).count()
+
+use user
+
+db.users.insertMany([
+	{name: "Max", hobbies: [{title: "Sports", frequency: 3}, {title: "Cooking", frequency: 6}], phone: 123456789},
+	{name: "Manuel", hobbies: [{title: "Cars", frequency: 2}, {title: "Cooking", frequency: 5}], phone: "987654321", age: 84}
+])
+
+//This query only returns Manuel user document because Max does not have field age
+db.users.find({age: {$exists: true}}).pretty()
+
+//This query returns no document because although Manuel has field age defines, it's age is greater than 50
+db.users.find({age: {$exists: true, $lte: 50}}).pretty()
+
+db.users.insertOne({name: "Anna", hobbies: [{title: "Sports", frequency: 2}, {title: "Yoga", frequency: 3}], phone: "192837465", age: null})
+
+//Although Anna has field age, its value is null and here 
+db.users.find({age: {$ne: null}}).pretty()
+
+//This query will return only Max because he is the only that has a number as a phone
+//Manuel and Anna have string as a phone
+db.users.find({phone: {$type: "number"}}).pretty()
+
+//Here we get Manuel and Anna too because now string and number types are accepted for field phone
+db.users.find({phone: {$type: ["number", "string"]}}).pretty()
+
+use movieData
+
+//Here we use regex to find movies with a summary that contains the word musical in some part of it
+db.movies.find({summary: {$regex: /musical/}}).pretty()
+
+use financialData
+
+db.sales.insertMany([
+	{volume: 100, target: 120},
+	{volume: 89, target: 80},
+	{volume: 200, target: 177},
+])
+
+//This query will only return documents in which the volume is greater than the target
+db.sales.find({$expr: {
+	$gt: ["$volume", "$target"]
+}})
+
+//if volume >= 190 then volume -=10, if volume > target then success
+db.sales.find({$expr: {
+	$gt: [{$cond: {if: {$gte: ["$volume", 190]}, then: {$subtract: ["$volume", 30]}, else: "$volume"}}, "$target"]
+}}).pretty()
+
+use movieData
+
+//although hobbies holds an array and not an object yet we can query with "hobbies.title"
+//because mongo understands that we are actually looking for the field title in the documents
+//that are inside the array
+db.users.find({"hobbies.title": "Sports"}).pretty()
+
+db.users.insertOne({name: "Chris", hobbies: ["Sports", "Cooking", "Hiking"]})
+
+//Query users with exactly 3 hobbies
+db.users.find({hobbies: { $size: 3}}).pretty()
+
+use boxOffice
+
+//Query movies that belong to the genres action and thriller and ignores the order
+//it may belong to more genres too
+db.movieStarts.find({genre: {$all: ["action", "thriller"]}}).pretty()
+
+use movieData
+
+//Query movies that contains inside the hobbies array field elements/documents with title "Sports"
+//and frequency greather than or equals to 3
+db.users.find({hobbies: { $elemMatch: {title: "Sports", frequency: {$gte: 3}} }}).pretty()
+
+//working with cursors
+
+//return the number of accessible elements from the query
+db.movies.find().count()
+
+const dataCursor = db.movies.find()
+//returns the first element of the cursor dataCursor
+dataCursor.next()
+//returns the next element of the cursor dataCursor
+dataCursor.next()
+//and the next again
+dataCursor.next()
+
+//print the following documents in the cursor
+dataCursor.forEach((doc) => {
+	printjson(doc)	
+})
+
+//will return an error because dataCursor has been fully iterated
+dataCursor.next()
+
+//use hasNext to check if there is more to be read
+dataCursor.hasNext()
+
+//sort
+
+//sort movies by rating.average in ascending order
+db.movies.find().sort({"rating.average": 1}).pretty()
+
+//sort movies by rating.average in descending order
+db.movies.find().sort({"rating.average": -1}).pretty()
+
+//sort movies by rating.average in descending and runtime ascending order
+db.movies.find().sort({"rating.average": -1, runtime: 1}).pretty()
+
+//paging
+
+//skip(10) will ignore the first 10 documents and limit(3) will return only 3 documents
+db.movies.find().sort({"rating.average": 1}).skip(10).limit(3).pretty()
+
+//count() will still return 240 because the cursor is related to the query result
+//and not to the skip or limit calls
+db.movies.find().sort({"rating.average": 1}).skip(10).limit(3).count()
+
+//projection with schedule.time will return only the time field ignoring days field
+db.movies.find({}, {name: 1, genres: 1, runtime: 1, "schedule.time": 1}).pretty()
+
+//returns all documents that have Drama as a genre but only display the genres field
+//for those that also include the Horror genre
+db.movies.find({genres: "Drama"}, {genres: {$elemMatch: {$eq: "Horror"}}}).pretty()
+
+//Query for movies with rating.average greater than 9 but only returns _id, name and
+//genres fields, here genres field will be limited to 2 elements
+db.movies.find({"rating.average": {$gt: 9}}, {genres: {$slice: 2}, name: 1}).pretty()
+
+//in this example genres will skip 1 element and limit to 2
+db.movies.find({"rating.average": {$gt: 9}}, {genres: {$slice: [1,2]}, name: 1}).pretty()
+
+use movieData
+
+db.users.updateOne({_id: ObjectId("613146efa7c503119b90b338")}, {$set: {hobbies: [{title: "Sports", frequency: 5}, {title: "Cooking", frequency: 3}, {title: "Hiking", frequency: 1}]}})
+db.users.updateMany({"hobbies.title": "Sports"}, {$set: {isSporty: true}})
+
+//Increments age of Manuel by 1
+db.users.updateOne({name: "Manuel"}, {$inc: {age: 1}})
+
+//Decrements age of Manuel by 1
+db.users.updateOne({name: "Manuel"}, {$inc: {age: -1}})
+
+//Increments age of Manuel by 1 and sets isSporty field to false
+db.users.updateOne({name: "Manuel"}, {$inc: {age: 1}, $set: {isSporty: false}})
+
+//This would generate an error because you can'y increment and set the same variable at the same call
+db.users.updateOne({name: "Manuel"}, {$inc: {age: 1}, $set: {age: 30}})
+
+//if the user age is greater than the min value, it will be set to the min value
+db.users.updateOne({name: "Chris"}, {$min: {age: 35}})
+
+//Now it will be set to 30 because it was 35 and all values above 30 will be set to 30
+db.users.updateOne({name: "Chris"}, {$min: {age: 30}})
+
+//Now it was set to 38 because with $max all values that are below $max are changed
+db.users.updateOne({name: "Chris"}, {$max: {age: 38}})
+
+//This will multiply Chris age by 1.1
+db.users.updateOne({name: "Chris"}, {$mul: {age: 1.1}})
+
+//This will remove the field phone from all documents with isSporty == true
+db.users.updateMany({isSporty: true}, {$unset: {phone: ""}})
+
+//This will rename field age to totalAge
+db.users.updateMany({}, {$rename: {age: "totalAge"}})
+
+//With the third argument "upsert" in case there is no match to the user of name "Maria" a new document will be inserted
+db.users.updateOne({name: "Maria"}, {$set: {age: 29, hobbies: [{title: "Good food", frequency: 3}], isSporty: true}}, {upsert: true})
+
+//This will update the first element in the array hobbies that match the constraints by adding the field highFrequency
+db.users.updateMany({hobbies: {$elemMatch: {title: "Sports", frequency: {$gte: 3}}}}, {$set: {"hobbies.$.highFrequency": true}})
+
+db.users.deleteOne({name: "Chris"})
+
+//This will reduce every field frequency by 1 inside the documents in the hobbies array
+db.users.updateMany({totalAge: {$gt: 30}}, {$inc: {"hobbies.$[].frequency": -1}})
+
+//First this will filter the documents that contain some hobby with frequency greater than 2
+//Then it will update these documents setting the hobbies that have frequency greater than 3 with the field goodFrequency == true
+db.users.updateMany({"hobbies.frequency": {$gt: 2}}, {$set: {"hobbies.$[el].goodFrequency": true}}, {arrayFilters: [{"el.frequency": {$gt: 3}}]})
+
+//by using the operator $push we can add elements to the hobbies array
+db.users.updateOne({name: "Maria"}, {$push: {hobbies: {title: "Sports", frequency: 2}}})
+
+//And with $each we can pass a list of elements to be appended to the hobbies array
+//We can also put $sort to the end of the list to tell mongo to sort these elements by their frequency before pushing to the hobbies array
+//$sort will sort not only the elements that are being added but also the elements that already exists in the hobbies array
+db.users.updateOne({name: "Maria"}, {$push: {hobbies: {$each: [{title: "Good Wine", frequency: 1}, {title: "hiking", frequency: 2}, $sort: {frequency: -1}]}}})
+
+//this will remove from the hobbies array the element that has title "hiking"
+db.users.updateOne({name: "Maria"}, {$pull: {hobbies: {title: "hiking"}}})
+
+//With pop we simple tell mongo that it should remove the firsst or last element in the array
+//with 1 it will remove the last element, with -1 it will remove the first element
+db.users.updateOne({name: "Maria"}, {$pop: {hobbies: 1}})
+
+//By using the operator $addToSet it will add an element if it does not exist, when I run the
+//same command again it will not be added because the element already exists
+db.users.updateOne({name: "Maria"}, {$addToSet: {hobbies: {title: "Hiking", frequency: 2}}})
+
+use contactData
+
+//shows what plan mongo used to execute the query
+db.contacts.explain().find({"dob.age": {$gt: 60}})
+
+//shows statistics about the query, how long it took, number of results, total docs examined and so on
+db.contacts.explain("executionStats").find({"dob.age": {$gt: 60}})
+
+//creates an index in field dob.age, 1 means ascending and -1 descending but that does not matter that much
+db.contacts.createIndex({"dob.age": 1})
+
+//Now this query will run faster because we have an index in field dob.age
+db.contacts.explain("executionStats").find({"dob.age": {$gt: 60}})
+
+//this query will run slower than if there was no index, simply because the contacts collection has no document
+//with dob.age less than or equals to 20, all documents have dob.age greater than 20, so mongo will have to
+//traverse the whole index list, retrieve the indexes and than collect the documents based on those indexes
+//this is one specific situation where the index won't help at all
+db.contacts.explain("executionStats").find({"dob.age": {$gt: 20}})
+
+//here we remove the dob.age index
+db.contacts.dropIndex({"dob.age": 1})
+
+//running this query again but now without the index it will be faster because it will not traverse the index list
+//once we removed it, it will only traverse and retrieve the documents one by one skipping the index query step
+db.contacts.explain("executionStats").find({"dob.age": {$gt: 20}})
+
+//here we created a compound index, a single index that holds two fields values
+db.contacts.createIndex({"dob.age": 1, gender: 1})
+
+//This query will use the compound index created before
+db.contacts.explain().find({"dob.age": 35, gender: "male"})
+
+//This query will also use the compound index created before
+db.contacts.explain().find({"dob.age": 35})
+
+//This query though will not use the compound index because it is looking only for the gender field
+//and the primary field of the compound index is dob.age, you can use dob.age as a filter alone
+//because this is the primary field of the index, but gender alone cannot be used because it is the
+//secondary field
+db.contacts.explain().find({gender: "male"})
+
+//This query will not need to run a sort on the retrieved data because the index we created is compound
+//and works on the fields dob.age and gender, so when we filter by a specific dob.age like in this example
+//the retrieved documents will be already sorted by their gender
+db.contacts.explain().find({"dob.age": 35}).sort({gender: 1})
+
+//The following command will show all the indexes upon a collection
+db.contacts.getIndexes()
+
+//The following index will fail to be created because it is trying to create an unique index
+//but there is more than one document with the same value at email field
+db.contacts.createIndex({email: 1}, {unique: true})
+
+//Removing the index "dob.age_1_gender_1"
+db.contacts.dropIndex("dob.age_1_gender_1")
+
+//The following line will create an index upon dob.age but it will index only documents with gender == "male"
+//this king of index is useful to occupy less storage space once the index will only work on documents that
+//the partialFilterExpression applies to
+db.contacts.createIndex({"dob.age": 1}, {partialFilterExpression: {gender: "male"}})
+
+//The following query will NOT use the index created previously because that index only applies to gender =="male"
+//and we are not specifying such constraint in our query
+db.contacts.explain().find({"dob.age": {$gt: 60}})
+
+db.users.insertMany([
+	{name: "Max", email: "max@test.com"},
+	{name: "Manuel"}
+])
+
+db.users.createIndex({email: 1}, {unique: true})
+
+//This line will fail because the previous created index defines email as unique and when a field is not provided at insertion
+//it will be considered as null by the index, in this case Manuel already is indexed with value null for the email field, inserting
+//Anna will fail because it also does not have an email
+db.users.insertOne({name: "Anna"})
+
+//Removing the index {email: 1}
+db.users.dropIndex({email: 1}, {unique: true})
+
+//Now this index will work because the partialFilterExpression defined that only documents wich the field email exists
+//can be added
+db.users.createIndex({email: 1}, {unique: 1, partialFilterExpression: {email: {$exists: true}}})
+
+//Now this insert works
+db.users.insertOne({name: "Anna"})
+
+//And this will fail because the email max@test.com has already been added
+db.users.insertOne({name: "Anna", email: "max@test.com"})
+
+db.sessions.insertOne({data: "asdasdsasd", createdAt: new Date()})
+
+//This index will remove elements after 10 seconds of its creations
+//independently if the insertion happened before or after the index
+//creation, this kind of index only applies to date fields. The last
+//insert will disappear after 10 seconds
+db.sessions.createIndex({createdAt: 1}, {expireAfterSeconds: 10})
+
+//This insert will also disappear after 10 seconds of its creation
+db.sessions.insertOne({data: "asdasdsasd", createdAt: new Date()})
+
+db.customers.insertMany([
+	{name: "Max", age: 29, salary: 3000},
+	{name: "Manuel", age: 30, salary: 4000}
+])
+
+db.customers.createIndex({name: 1})
+
+//This is a case where the totalDocsExamined brought by the explain() will be set to 0
+//the number of docs examined will be 0 because with projection we are only returning
+//the name field, and this name field already belongs to the index previously created
+//so mongo does not need to verify the document, it simply returns the value associated
+//with the index
+db.customers.explain("executionStats").find({name: "Max"}, {_id: 0, name: 1})
+
+//With this index the customers collection will have three indexes, they are: _id_,
+//name_1 and age_1_name_1.
+db.customers.createIndex({age: 1, name: 1})
+
+//This explain will show us a winning plan and a rejected plan. The winning plan will
+//use the index age_1_name_1 because our query is bounded to age and name fields. The
+//rejected plan will be the one that uses name_1 field, that happens because mongo
+//realizes that although this index uses one field that is in our query, there is another
+//index that is even better, in this case age_1_name_1, because it uses two fields that
+//are in our query
+db.customers.explain().find({name: "Max", age: 30})
+
+//allPlansExecution gives much more analytics information about mongo query plan
+db.customers.explain("allPlansExecution").find({name: "Max", age: 30})
+
+//fully clear the collection
+db.contacts.drop()
+
+db.contacts.insertOne({name: "Max", hobbies: ["Cooking", "Sports"], addresses: [{street: "Main street"}, {street: "Second street"}]})
+
+//This is an index that works upon the hobbies array
+db.contacts.createIndex({hobbies: 1})
+
+//This query will use the previously created index
+db.contacts.explain("executionStats").find({hobbies: "Sports"})
+
+db.contacts.createIndex({addresses: 1})
+
+//This query will not use the previous created index because addresses index
+//works upon the objects inside the array, not the fields inside those objects
+db.contacts.explain("executionStats").find({"addresses.street": "Main street"})
+
+//Now this query will work because it is looking not for the fields inside the objects of the
+//addresses array but for the whole objects
+db.contacts.explain("executionStats").find({addresses: {street: "Main street"}})
+
+//if we want to have an index that matches the fields inside
+//the objects of the addresses array this is the way
+db.contacts.createIndex({"addresses.street": 1})
+
+//Here you can see that now an index is used when executing this query
+db.contacts.explain("executionStats").find({"addresses.street": "Main street"})
+
+//We can have compound indexes where one of the fields is a multikey/array field like hobbies
+db.contacts.createIndex({name: 1, hobbies: 1})
+
+//But we cannot have compound indexes where more than one field is a multikey/array field
+//like addresses and hobbies together
+db.contacts.createIndex({addresses: 1, hobbies: 1})
+
+db.products.insertMany([
+	{title: "A Book", description: "This is an awesome book about a young artist!"},
+	{title: "Red T-Shirt", description: "This T-Shirt is red and it's pretty awesome!"},
+])
+
+//A text index will create a inverted index where the words of a text are splitted and each word
+//points to a set of documents, each collection can only have a single text index
+db.products.createIndex({description: "text"})
+
+//here we look for the documents that contain the awesome word in the field related to the text index
+//we don't need to specify the field description because collection may only have a single text index
+db.products.find({$text: {$search: "awesome"}})
+
+//this query will return a single document
+db.products.find({$text: {$search: "book"}})
+
+//This query will also work because the text search engine is case insensitive
+db.products.find({$text: {$search: "bOoK"}})
+
+//this query will return two documents because it will understand that we are not looking for the
+//sentence "red book" but for documents that contain at least one of these two words, that is, the
+//documents that contain either the "red" word or the "book" word
+db.products.find({$text: {$search: "red book"}})
+
+//if we want to look for a phrase than double quotes must be used like the following example
+db.products.find({$text: {$search: "\"awesome book\""}})
+
+//Words that are too common are not indexed like in the following examples
+//that returns 0 results because 
+db.products.find({$text: {$search: "This"}})
+db.products.find({$text: {$search: "This is"}})
+db.products.find({$text: {$search: "\"This is\""}})
+
+//Here we sort the documents by their text index score, documents
+//with higher score will appear first
+db.products.find({$text: {$search: "awesome t-shirt"}}, {score: {$meta: "textScore"}}).pretty()
+
+//remove the text index
+db.products.dropIndex("description_text")
+
+//Now we will still have a single text index for the whole collection but this index
+//will match words on both fields title and description
+db.products.createIndex({title: "text", description: "text"})
+
+db.products.insertOne({title: "A Ship", description: "Floats perfectly."})
+
+//The two following queues will return a document because the word ship is on the title field
+//and the floats word in on the description field, both fields are part of the text index
+db.products.find({$text: {$search: "ship"}})
+db.products.find({$text: {$search: "floats"}})
+
+//By putting the minus symbol in front of a word we tell mongo that we are looking for
+//documents that do not contain such word
+db.products.find({$text: {$search: "awesome -t-shirt"}})
+
+//remove the previously created text index
+db.products.dropIndex("title_text_description_text")
+
+//when creating a text index we can tell mongo wich language this text is based on, the default is english. We
+//can also define weights for the fields of the index, in this case we are giving to the description field a
+//much greater weight, 10, than to the title field, 1.
+db.products.createIndex({title: "text", description: "text"}, {default_language: "english", weights: {title: 1, description: 10}})
+
+//when looking for a text index we can pass additional arguments like $caseSensitive: true, the default is false.
+db.products.find({$text: {$search: "red", $caseSensitive: true}}, {score: {$meta: "textScore"}})
+
+//When indexes are created they block the collection access upto the index has been completely created
+//by using the background argument we can change it to true and make the collection accessible during
+//the index creation
+db.products.createIndex({title: 1}, {background: true})
+
+//geo localisation
+
+use awesomeplaces
+
+//Inserting geo localisation
+db.places.insertOne({name: "California Academy Of Sciences", location: {type: "Point", coordinates: [-122.4724356, 37.7672544]}})
+
+//to later write queries that use this location field we need to create a 2dsphere index before otherwise the query will fail
+db.places.createIndex({location: "2dsphere"})
+
+//now we can write queries that filter by location field, maxDistance is in meters, coordinates is [longitude, latitude]
+db.places.find({location: {$near: {$geometry: {type: "Point", coordinates: [-122.471114,37.771104]}, $maxDistance: 3000}}})
+
+db.places.insertOne({name: "Conservatory Of Flowers", location: {type: "Point", coordinates: [-122.4615748, 37.7701756]}})
+db.places.insertOne({name: "Golden Gate Tennis Park", location: {type: "Point", coordinates: [-122.4593702, 37.7705046]}})
+db.places.insertOne({name: "Nopa", location: {type: "Point", coordinates: [-122.4389058, 37.7747415]}})
+
+const p1 = [-122.4547, 37.77473]
+const p2 = [-122.45303, 37.76641]
+const p3 = [-122.51026, 37.76411]
+const p4 = [-122.51088, 37.77131]
+
+//With geoWithin we can define a polygon and return the elements that are inside this polygon
+db.places.find({location: {$geoWithin: {$geometry: {type: "Polygon", coordinates: [[p1, p2, p3, p4, p1]] } } } })
+
+db.areas.insertOne({name: "Golden Gate Park", area: {type: "Polygon", coordinates: [[p1, p2, p3, p4, p1]] }})
+
+//Creating a 2dsphere index to be able to filter by area field
+db.areas.createIndex({area: "2dsphere"})
+
+//Here we are looking for the areas/polygons that include the point [-122.49089, 37.76992]
+db.areas.find({area: {$geoIntersects: {$geometry: {type: "Point", coordinates: [-122.49089, 37.76992]}}}})
+
+//This query will return nothing because the point is outside of the polygon [p1, p2, p3, p4, p1]
+db.areas.find({area: {$geoIntersects: {$geometry: {type: "Point", coordinates: [-122.48446, 37.77776]}}}})
+
+//Here we are looking at the the places within a radius of 1km, the center point has longitude -122.46203
+//and latitude 37.77286, 1/6378.1 is 1Km in radians. This kind of query differs from $near operator in
+//a sense that $near returns the elements sorted in order of proximity, in the following line this does
+//not happen
+db.places.find({location: {$geoWithin: {$centerSphere: [[-122.46203, 37.77286], 1/6378.1]}}})
+
+use contactData
+
+//with aggregate we can build a pipeline of query, group, sort and projection. In this example we filter
+//documents with gender female and group them by the location.state field, we also return the field totalPersons
+//that describe the amount of grouped documents
+db.contacts.aggregate([	
+	{ $match: { gender: "female"} },
+	{ $group: { _id: { state: "$location.state" }, totalPersons: { $sum: 1 } }},
+	{ $sort: { totalPersons: -1 } }
+]).pretty()
+
+//Here we are using only the projection step, with aggregate projection is more powerfull and we can
+//concatenate fields like in this example where we concatenate name.first and name.last with a space
+//between them
+db.contacts.aggregate([
+	{ $project: { _id: 0, gender: 1, fullName: { $concat: ["$name.first", " ", "$name.last"] } } }
+]).pretty()
+
+//we can also make operations on the fields before concatenating them, like transforming the first
+//character of the name.first and name.last fields to upper case
+db.contacts.aggregate([
+	{
+		$project: {
+			_id: 0,
+			gender: 1,
+			fullName: {
+				$concat: [
+					{ $toUpper: { $substrCP: ["$name.first", 0, 1] } },
+					{ $substrCP: ["$name.first", 1, { $subtract: [ { $strLenCP: "$name.first" }, 1 ] } ] },
+					" ",
+					{ $toUpper: { $substrCP: ["$name.last", 0, 1] } },
+					{ $substrCP: ["$name.last", 1, { $subtract: [ { $strLenCP: "$name.last" }, 1 ] } ] }
+				]
+			}
+		}
+	}
+]).pretty()
+
+//Here we are using two project steps, the second project steps will receibe the fields that were
+//built by ther first project step. We are also using $convert operator to transform the field
+//location.coordinates.longitude in a double
+db.contacts.aggregate([
+	{
+		$project: {
+			_id: 0,
+			name: 1,
+			email: 1,
+			birthdate: {
+				$convert: {
+					input: "$dob.date",
+					to: "date"
+				}
+			},
+			birthdate2: {
+				$toDate: "$dob.date"
+			},
+			age: "$dob.age",
+			location: {
+				type: "Point",
+				coordinates: [
+					{
+						$convert: {
+							input: "$location.coordinates.longitude",
+							to: "double",
+							onError: 0.0,
+							onNull: 0.0
+						}
+					},
+					{
+						$convert: {
+							input: "$location.coordinates.latitude",
+							to: "double",
+							onError: 0.0,
+							onNull: 0.0
+						}
+					}
+				]
+			}
+		}
+	},
+	{
+		$project: {
+			gender: 1,
+			email: 1,
+			location: 1,
+			birthdate: 1,
+			age: 1,
+			fullName: {
+				$concat: [
+					{ $toUpper: { $substrCP: ["$name.first", 0, 1] } },
+					{ $substrCP: ["$name.first", 1, { $subtract: [ { $strLenCP: "$name.first" }, 1 ] } ] },
+					" ",
+					{ $toUpper: { $substrCP: ["$name.last", 0, 1] } },
+					{ $substrCP: ["$name.last", 1, { $subtract: [ { $strLenCP: "$name.last" }, 1 ] } ] }
+				]
+			}
+		}
+	},
+	{
+		$group: {
+			_id: { birthYear: { $isoWeekYear: "$birthdate" } },
+			numPersons: { $sum: 1 }
+		}
+	},
+	{
+		$sort: {
+			numPersons: -1
+		}
+	}
+]).pretty()
+
+//with unwind we replicate the documents for each element inside the hobbbies array
+//then in the second aggretate step we group those documents by their age and push
+//each uninded hobby of those grouped documents inside a single array
+db.friends.aggregate(
+	{
+		$unwind: "$hobbies"
+	},
+	{
+		$group: {
+			_id: { age: "$age" },
+			allHobbies: { $push: "$hobbies" }
+		}
+	}
+)
+
+//Here we use addToSet to avoid duplicated values inside de array
+db.friends.aggregate(
+	{
+		$unwind: "$hobbies"
+	},
+	{
+		$group: {
+			_id: { age: "$age" },
+			allHobbies: { $addToSet: "$hobbies" }
+		}
+	}
+)
+
+//get only the first element in the examScores array
+db.friends.aggregate([
+	{
+		$project: {
+			_id: 0,
+			examScore: { $slice: ["$examScores", 1] }
+		}
+	}
+])
+
+//get only the last two elements in the examScores array
+db.friends.aggregate([
+	{
+		$project: {
+			_id: 0,
+			examScore: { $slice: ["$examScores", -2] }
+		}
+	}
+])
+
+//Here we start at position two and get up to three element
+db.friends.aggregate([
+	{
+		$project: {
+			_id: 0,
+			examScore: { $slice: ["$examScores", 2, 3] }
+		}
+	}
+])
+
+//With $size we can get the length of the array
+db.friends.aggregate([
+	{
+		$project: {
+			_id: 0,
+			numScores: { $size: "$examScores" }
+		}
+	}
+])
+
+//With $filter we can define which elements of an array will be selected
+db.friends.aggregate([
+	{
+		$project: {
+			_id: 0,
+			scores: { $filter: { input: "$examScores", as: "sc", cond: { $gt: ["$$sc.score", 60 ] } } }
+		}
+	}
+])
+
+//Here we combine different pipeline phases
+db.friends.aggregate([
+	{ $unwind: "$examScores" },
+	{ $project: { _id: 1, name: 1, age: 1, score: "$examScores.score" }},
+	{ $sort: { score: -1 } },
+	{ $group: { _id: "$_id", name: { $first: "$name" }, maxScore: { $max: "$score" } } },
+	{ $sort: { maxScore: -1 } }
+])
+
+//With $bucket we can group with boundaries
+db.contacts.aggregate([
+	{
+		$bucket: {
+			groupBy: "$dob.age",
+			boundaries: [18, 30, 40, 50, 60, 120],
+			output: {
+				numPersons: { $sum: 1},
+				averageAge: { $avg: "$dob.age" }
+			}
+		}
+	}
+]).pretty()
+
+//bucketAuto will automatically define the boundaries base on the number of bukets
+db.contacts.aggregate([
+	{
+		$bucketAuto: {
+			groupBy: "$dob.age",
+			buckets: 5,
+			output: {
+				numPersons: { $sum: 1},
+				averageAge: { $avg: "$dob.age" }
+			}
+		}
+	}
+]).pretty()
+
+db.contacts.aggregate([
+	{ $match: { gender: "male" } },
+	{ $project: { _id: 0, name: { $concat: ["$name.first", " ", "$name.last"] }, birthdate: { $toDate: "$dob.date"} } },
+	{ $sort: {birthdate: 1 } },
+	{ $skip: 10 },
+	{ $limit: 10 },
+])
+
+//With $out we can specify a collection that will receive the output of the previous phase of the pipeline
+db.contacts.aggregate([
+    {
+      $project: {
+        _id: 0,
+        name: 1,
+        email: 1,
+        birthdate: { $toDate: '$dob.date' },
+        age: "$dob.age",
+        location: {
+          type: 'Point',
+          coordinates: [
+            {
+              $convert: {
+                input: '$location.coordinates.longitude',
+                to: 'double',
+                onError: 0.0,
+                onNull: 0.0
+              }
+            },
+            {
+              $convert: {
+                input: '$location.coordinates.latitude',
+                to: 'double',
+                onError: 0.0,
+                onNull: 0.0
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      $project: {
+        gender: 1,
+        email: 1,
+        location: 1,
+        birthdate: 1,
+        age: 1,
+        fullName: {
+          $concat: [
+            { $toUpper: { $substrCP: ['$name.first', 0, 1] } },
+            {
+              $substrCP: [
+                '$name.first',
+                1,
+                { $subtract: [{ $strLenCP: '$name.first' }, 1] }
+              ]
+            },
+            ' ',
+            { $toUpper: { $substrCP: ['$name.last', 0, 1] } },
+            {
+              $substrCP: [
+                '$name.last',
+                1,
+                { $subtract: [{ $strLenCP: '$name.last' }, 1] }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    { $out: "transformedContacts" }
+  ]).pretty();
+
+db.transformedContacts.createIndex({ location: "2dsphere" })
+
+db.transformedContacts.aggregate([
+	{
+		$geoNear: {//will look for the field location that has a 2dsphere index
+			near: {
+				type: "Point",
+				coordinates: [
+					-18.4,
+					-42.8
+				]
+			},
+			maxDistance: 1000000,	//1000 Km
+			$limit: 10,				//number of results limited to 10
+			query: { age: { $gt: 30 } },//This way we don't need to write another pipeline phase
+			distanceField: "distance"//a field that will contain the distance from the point to the document location
+		}
+	}
+]).pretty()
+
+//mongo shell uses javascript and javascript treats all numbers as double(64 bit)
+//independently if it has decimal places or not, here we are adding the number 29
+//and it is treated as a double
+db.numtest.insertOne({age: 29})
+
+//With NumberInt() we can tell mongo to cast this double to an int before storing it
+db.numtest.insertOne({age: NumberInt("29")})
+
+//if we try to insert value five bilion as an integer it won't fail but the stored
+//value will be wrong because it exceeds the limit
+db.numtest.insertOne({value: NumberInt("5000000000")})
+
+//Now it will store the right value because NumberLong will transform this value in
+//a 64 bit integer
+db.numtest.insertOne({value: NumberLong("5000000000")})
+
+db.science.insertOne({a: 0.3, b: 0.1})
+
+//Here we have an issue, a - b should result 0.2 but actually it will result
+//0.19999999999999998.
+db.science.aggregate([{$project: { result: {$subtract: ["$a", "$b"]} }}])
+
+db.science.deleteMany({})
+
+//With NumberDecimal we have a much higher precision and this kind of issue does not happen
+db.science.insertOne({a: NumberDecimal("0.3"), b: NumberDecimal("0.1")})
+db.science.aggregate([{$project: { result: {$subtract: ["$a", "$b"]} }}])
+
+//drop the current database
+db.dropDatabase()
