@@ -1,0 +1,20 @@
+enum Genre {
+	FICTION
+	ADVENTURE
+	DRAMA
+	HORROR
+	FANTASY
+	FANTASY_FICTION
+	SCIENCE_FICTION
+}
+
+type Book {
+	id: ID!
+	title: String
+	author: String
+	genre: Genre
+}
+
+type Query {
+	books: [Book]
+}

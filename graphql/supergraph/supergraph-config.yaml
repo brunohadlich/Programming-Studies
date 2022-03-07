@@ -1,0 +1,9 @@
+subgraphs:
+  library:
+    routing_url: http://localhost:4002
+    schema:
+      file: ../library/type-defs.graphql
+  user:
+    routing_url: http://localhost:4001
+    schema:
+      file: ../user/type-defs.graphql
