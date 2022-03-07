@@ -384,7 +384,7 @@ db.movieStarts.find({genre: {$all: ["action", "thriller"]}}).pretty()
 
 use movieData
 
-//Query movies that contains inside the hobbies array field elements/documents with title "Sports"
+//Query users that contains inside the hobbies array field elements/documents with title "Sports"
 //and frequency greather than or equals to 3
 db.users.find({hobbies: { $elemMatch: {title: "Sports", frequency: {$gte: 3}} }}).pretty()
 

@@ -1,0 +1,93 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  labels:
+    group: example
+spec:
+  selector:
+    app: second-hello-world
+  ports:
+    - protocol: 'TCP'
+      port: 80
+      targetPort: 8000
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: second-hello-world-deployment
+  labels:
+    group: example
+spec:
+  replicas: 1
+  selector:
+    #First approach:
+    # matchLabels:
+    #   app: second-hello-world
+    #Second approach:
+    matchExpressions:
+      - {key: app, operator: In, values: [second-hello-world]}
+  template: # describe the pods
+    metadata:
+      labels:
+        app: second-hello-world
+    spec:
+      containers:
+        - name: hello-container
+          image: brunohadlich/hello-world-container:latest
+          #The value Always to imagePullPolicy can force kubernetes to make many requests
+          #to the docker registry, then the docker registry server may deny the following
+          #requests causing ImagePullBackOff error
+          #imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            periodSeconds: 10
+            initialDelaySeconds: 5
+          volumeMounts:
+            - mountPath: /batata
+              name: hello-volume
+      volumes:
+        - name: hello-volume
+          #emptyDir creates an empty directory per pod, if more than 1
+          #replica is used, it will create a directory per pod
+          #emptyDir: {}
+          ############################################################
+          #hostPath creates a volume on the host machine, this volume
+          #is created once and used by multiple replicas when more than
+          #one replica is defined
+          #hostPath:
+          #  path: /home/bruno/git/Programming-Studies/microservices/data
+          #  type: DirectoryOrCreate
+          persistentVolumeClaim:
+            claimName: host-pvc
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: host-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: FileSystem
+  accessModes:
+    - ReadWriteOnce
+  hotstPath:
+    path: /data
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: host-pvc
+spec:
+  volumeName: host-pv
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+

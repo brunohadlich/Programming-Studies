@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app2-deployment
+  namespace: default
+  labels:
+    aRandomLabel: app2-deployment-label
+    anotherRandomLabel: app2-deployment-label
+spec:
+  replicas: 2
+  selector:
+    #spec.selector.matchLabels key/pair set must be a subset of the
+    #spec.template.metadata.labels set, otherwise an error will be generated
+    matchLabels:
+      app: app2
+  template:
+    metadata:
+      labels:
+        group: apps
+        app: app2
+    spec:
+      containers:
+      - name: app2-container
+        image: brunohadlich/app2:latest
+        env:
+        - name: PORT
+          value: '8089'
+        - name: API_HOST
+          value: app1-clusterip
+        - name: API_PORT
+          value: '54'

@@ -1,10 +1,7 @@
 *.s
 *.o
 *.pyc
-./openssl/keypair.pem
-./openssl/private.pem
-./openssl/public.pem
 node_modules
 aws/S3
-./openssl/private-key.pem
-./openssl/public-key.pem
+openssl/private-key.pem
+openssl/public-key.pem

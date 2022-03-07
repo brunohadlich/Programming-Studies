@@ -1,0 +1,5 @@
+minikube start
+minikube stop
+minikube status
+minikube dashboard
+minikube service hello-world-deployment

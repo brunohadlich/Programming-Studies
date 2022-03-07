@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app1-deployment
+  namespace: default
+  labels:
+    aRandomLabel: app1-deployment-label
+    anotherRandomLabel: app1-deployment-label
+spec:
+  replicas: 2
+  selector:
+    #spec.selector.matchLabels key/pair set must be a subset of the
+    #spec.template.metadata.labels set, otherwise an error will be generated
+    matchLabels:
+      app: app1
+  template:
+    metadata:
+      labels:
+        group: apps
+        app: app1
+    spec:
+      containers:
+      - name: app1-container
+        image: brunohadlich/app1:latest
+        env:
+        - name: PORT
+          value: '8083'
+        ports:
+        - containerPort: 8083

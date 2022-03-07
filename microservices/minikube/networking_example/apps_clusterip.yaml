@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: apps-clusterip
+  namespace: default
+spec:
+  #ClusterIP is internal to the cluster, it is not exposed to the outside world
+  type: ClusterIP
+  selector:
+    #Select all pods that have at least the label 'group: apps',
+    #the pods can have other labels too, that is not a problem
+    group: apps
+  ports:
+    #This service is internal to the cluster, all TCP traffic that hits this service port
+    #9090 will be redirected to the pods that match the previous selector at port 5050
+    - protocol: TCP
+      port: 9090
+      targetPort: 5050
