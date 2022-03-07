@@ -1,6 +1,6 @@
 const { EventHubProducerClient } = require("@azure/event-hubs");
 
-const connectionString = "Endpoint=sb://my-tests.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=+fAHI7MjIkDcc08+GwvgBE7nDRRgmr8ywcSH4FXqpA4=";
+const connectionString = "";
 const eventHubName = "tests-hub";
 
 // Create a producer client to send messages to the event hub.
