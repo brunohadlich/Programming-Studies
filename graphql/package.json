@@ -1,0 +1,25 @@
+{
+  "name": "node2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "graphql:library": "node library.js",
+    "graphql:user": "node user.js",
+    "graphql:supergraph": "node supergraph.js",
+    "graphql": "concurrently npm:graphql:*",
+    "start": "npm run graphql",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Bruno Simas Hadlich",
+  "license": "ISC",
+  "dependencies": {
+    "@apollo/federation": "^0.35.3",
+    "@apollo/gateway": "^0.48.3",
+    "apollo-server": "^3.6.3",
+    "graphql": "^16.3.0"
+  },
+  "devDependencies": {
+    "concurrently": "^7.0.0"
+  }
+}

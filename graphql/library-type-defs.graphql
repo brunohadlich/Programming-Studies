@@ -8,13 +8,13 @@ enum Genre {
 	SCIENCE_FICTION
 }
 
-type Book {
-	id: ID!
+type Book @key(fields: "id") {
+	id: ID
 	title: String
 	author: String
 	genre: Genre
 }
 
-type Query {
-	books: [Book]
+extend type Query {
+	books(id: ID): [Book]
 }
