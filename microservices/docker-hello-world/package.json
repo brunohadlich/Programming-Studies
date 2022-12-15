@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/brunohadlich/api_pagination_challenge#readme",
   "dependencies": {
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "lodash": "^4.17.21",
     "uuid": "^8.3.2"
   },
