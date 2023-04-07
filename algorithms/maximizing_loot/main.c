@@ -1,3 +1,4 @@
+// Greedy algorithm 'maximizing loot' that solves the fractional knapsack problem.
 #include <stdio.h>
 #include <stdlib.h>
 
