@@ -4,6 +4,10 @@
 node_modules
 aws/S3
 
+algorithms/sorting/bubble_sort
+algorithms/sorting/insertion_sort
+algorithms/sorting/selection_sort
+
 tests/c/learning/language/main
 tests/c/learning/preprocessor/main
 tests/c/learning/preprocessor/preprocessor.i

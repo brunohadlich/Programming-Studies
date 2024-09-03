@@ -1,11 +1,17 @@
 #include <stdio.h>
-#include <stdlib.h>
 
-int *sort(int *arr, int length) {
-	int i, j;
+#include "array.h"
+
+void sort(int *arr, int *dest, int length) {
+	int i, j, lowest, lowest_idx;
+	printf("selection_sort:\n");
+    if (dest) {
+        copy_array(arr, dest, length);
+        arr = dest;
+    }
 	for (i = 0; i < length; i++) {
-		int lowest = arr[i];
-		int lowest_idx = i;
+		lowest = arr[i];
+		lowest_idx = i;
 		for (j = i + 1; j < length; j++) {
 			if (arr[j] < lowest) {
 				lowest = arr[j];
@@ -14,15 +20,5 @@ int *sort(int *arr, int length) {
 		}
 		arr[lowest_idx] = arr[i];
 		arr[i] = lowest;
-	}
-	return arr;
-}
-
-int main(int argc, char *argv[]) {
-       	int arr[] = {1, 2, 5, 4, 3, 9, 8, 6, 7};
-	int *arr2 = sort(arr, 9);
-	int i;
-	for (i = 0; i < 9; i++) {
-		printf("%d\n", arr2[i]);
 	}
 }
