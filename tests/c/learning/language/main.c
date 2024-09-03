@@ -53,17 +53,25 @@ int main(int argc, char* argv[]) {
 			break;
 	}
 
+	// struct with 7 bits but compiler rounds to 8 bits (1 byte)
 	struct bit_fields {
-		unsigned char field_1: 3;
-		unsigned char field_2: 2;
-		unsigned char field_3: 2;
+		unsigned char field_1: 3; // 3 bits
+		unsigned char field_2: 2; // 2 bits
+		unsigned char field_3: 2; // 2 bits
 	} bit_fields_variable;
 
-	printf("Size of bit_fields_variable: %d\n", sizeof(bit_fields_variable));
+	printf("Size of bit_fields_variable: %ld\n", sizeof(bit_fields_variable));
 
-	bit_fields_variable.field_3 = 2;
+	// 7 is the limit because field_1 has 3 bits of size
+	bit_fields_variable.field_1 = (unsigned char)7;
+	// 3 is the limit because field_2 has 2 bits of size
+	bit_fields_variable.field_2 = (unsigned char)2;
+	// 3 is the limit because field_3 has 2 bits of size
+	bit_fields_variable.field_3 = (unsigned char)3;
 
-	printf("%d\n", bit_fields_variable);
+	printf("%u\n", (unsigned char)bit_fields_variable.field_1); // 7
+	printf("%u\n", (unsigned char)bit_fields_variable.field_2); // 2
+	printf("%u\n", (unsigned char)bit_fields_variable.field_3); // 3
 
 	typedef struct {
 		int a;

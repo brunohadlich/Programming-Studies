@@ -4,6 +4,6 @@
 node_modules
 aws/S3
 
-tests/c/language_learning/main
-tests/c/language_learning/preprocessor/main
-tests/c/language_learning/preprocessor/preprocessor.i
+tests/c/learning/language/main
+tests/c/learning/preprocessor/main
+tests/c/learning/preprocessor/preprocessor.i
