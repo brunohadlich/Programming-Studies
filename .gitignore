@@ -5,3 +5,7 @@ node_modules
 aws/S3
 openssl/private-key.pem
 openssl/public-key.pem
+
+tests/c/language_learning/main
+tests/c/language_learning/preprocessor/main
+tests/c/language_learning/preprocessor/preprocessor.i
