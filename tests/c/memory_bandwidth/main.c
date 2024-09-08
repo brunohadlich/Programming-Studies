@@ -17,14 +17,15 @@ const size_t sizes[] = {
     1 * GIGA,
     2 * GIGA,
     4 * GIGA,
-    8 * GIGA};
+    8 * GIGA
+};
 
 char *allocate_memory(size_t sz)
 {
     char *block = (char *)malloc(sz + 64);
     if (block == NULL)
     {
-        printf("error");
+        printf("malloc error");
         exit(1);
     }
     return block;
