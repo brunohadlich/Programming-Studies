@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "array.h"
+#include "sort.h"
 
 void sort(int *arr, int *dest, int length) {
     int i, j, pivot;

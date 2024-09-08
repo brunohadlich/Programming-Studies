@@ -20,7 +20,13 @@ selection_sort.o: selection_sort.c
 selection_sort: base_objects selection_sort.o
 	gcc selection_sort.o array.o main.o -o selection_sort
 
-all: bubble_sort insertion_sort selection_sort
+merge_sort.o: merge_sort.c
+	gcc -c merge_sort.c
+
+merge_sort: base_objects merge_sort.o
+	gcc merge_sort.o array.o main.o -o merge_sort
+
+all: bubble_sort insertion_sort selection_sort merge_sort
 
 clear:
-	rm -f *.o bubble_sort insertion_sort selection_sort
+	rm -f *.o bubble_sort insertion_sort selection_sort merge_sort

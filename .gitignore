@@ -9,6 +9,7 @@ aws/S3
 algorithms/sorting/bubble_sort
 algorithms/sorting/insertion_sort
 algorithms/sorting/selection_sort
+algorithms/sorting/merge_sort
 
 languages/C/extern/main
 languages/C/language/main

@@ -1,6 +1,7 @@
 #include <stdlib.h>
-#include "merge_sort.h"
-#include "utils.h"
+#include <stdio.h>
+#include "array.h"
+#include "sort.h"
 
 void merge(int *array, int p, int q, int r) {
 	int *aux_array = (int *)malloc(sizeof(int) * (r - p + 1));
@@ -38,6 +39,12 @@ void single_thread_merge_sort(int *array, int p, int r) {
 	}
 }
 
-void merge_sort(int *array, int length) {
-	single_thread_merge_sort(array, 0, length - 1);
+void sort(int *arr, int *dest, int length) {
+    int i, j, pivot;
+    printf("merge_sort:\n");
+    if (dest) {
+        copy_array(arr, dest, length);
+        arr = dest;
+    }
+    single_thread_merge_sort(arr, 0, length - 1);
 }
