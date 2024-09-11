@@ -2,8 +2,8 @@
 #include <stdlib.h>
 
 int main(int argc, char **argv) {
-	int *toosmall = malloc (100);
-	free(toosmall);
-	free(toosmall);
+	int *int_ptr = malloc (sizeof(int));
+	free(int_ptr);
+	free(int_ptr);
 	return 0;
 }
